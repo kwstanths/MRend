@@ -63,7 +63,7 @@ float3 PointLightColor(PointLight light, float3 fragment_position, float3 fragme
         light_specular = light.diffuse_color * light_specular_strength * _SpecularIntensity;
     }
 
-    return light_ambient + Attenuation(fragment_position, light.position) *(light_diffuse + light_specular);
+    return light_ambient + Attenuation(fragment_position, light.position) * (light_diffuse + light_specular);
 }
 
 #endif

@@ -1,13 +1,13 @@
 #ifndef __Impostor_cginc__
 #define __Impostor_cginc__
 
-void Impostor(float3 fragment_position_viewspace, float sphere_radius, inout float3 position_viewspace, inout float3 normal_viewspace) {
-    
-    float3 fragment_pos = fragment_position_viewspace;
-    float3 sphere_center = mul(UNITY_MATRIX_MV, float4(0.0, 0.0, 0.0, 1.0)).xyz;
+void Impostor(float3 fragment_position_worldspace, float sphere_radius, inout float3 position_worldspace, inout float3 normal_worldspace) {
 
-    float3 A = float3(0, 0, 0);
-    float3 B = normalize(fragment_pos);
+    float3 fragment_pos = fragment_position_worldspace;
+    float3 sphere_center = mul(UNITY_MATRIX_M, float4(0.0, 0.0, 0.0, 1.0)).xyz;
+
+    float3 A = _WorldSpaceCameraPos.xyz;
+    float3 B = normalize(fragment_pos - _WorldSpaceCameraPos.xyz);
     float3 C = sphere_center;
 
     float a = dot(B, B);
@@ -22,8 +22,8 @@ void Impostor(float3 fragment_position_viewspace, float sphere_radius, inout flo
     float t2 = (0.5f * a) * (-b - delta);
     float t = min(t1, t2);
 
-    position_viewspace = B * t;
-    normal_viewspace = normalize(position_viewspace - sphere_center);
+    position_worldspace = A + B * t;
+    normal_worldspace = normalize(position_worldspace - sphere_center);
 }
 
 #endif
