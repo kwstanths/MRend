@@ -15,19 +15,19 @@ MonoBehaviour:
   active: 1
   enabled:
     overrideState: 1
-    value: 0
+    value: 1
   mode:
     overrideState: 1
     value: 1
   intensity:
     overrideState: 1
-    value: 0.53
+    value: 0.85
   color:
     overrideState: 1
-    value: {r: 1, g: 0.023584902, b: 0.023584902, a: 1}
+    value: {r: 0, g: 0, b: 0, a: 1}
   ambientOnly:
     overrideState: 1
-    value: 1
+    value: 0
   noiseFilterTolerance:
     overrideState: 1
     value: 0
