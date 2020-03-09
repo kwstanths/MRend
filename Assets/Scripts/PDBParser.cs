@@ -15,7 +15,7 @@ public class PDBParser
         string[] readText = File.ReadAllLines(file_name);
         foreach (string s in readText) {
             string type = s.Substring(0, 6);
-            if (type.Equals("ATOM  ")) {
+            if (type.Equals("ATOM  ") || type.Equals("HETATM")) {
                 int serial = System.Int32.Parse(s.Substring(6, 5));
                 string atom_name = s.Substring(12, 4).Replace(" ", "");
                 char alt_loc = s[16];
@@ -35,6 +35,7 @@ public class PDBParser
             }
         }
 
+        Debug.Log("Loaded: " + temp.Count);
         return temp;
     }
 
