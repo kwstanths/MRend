@@ -9,6 +9,7 @@ public class PDBParser
         List<Atom> temp = new List<Atom>();
 
         if (!File.Exists(file_name)) {
+            Debug.Log("File: " + file_name + " not found");
             return temp;
         }
 

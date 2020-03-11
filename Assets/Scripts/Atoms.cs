@@ -47,7 +47,8 @@ public class Atoms : MonoBehaviour
 
             ISphere isphere = hit.transform.GetComponent<ISphere>();
             Color rcolor = new Color(Random.Range(0.0f, 1.0f), Random.Range(0.0f, 1.0f), Random.Range(0.0f, 1.0f));
-            foreach (ISphere s in atoms_dictionary[isphere.atom_.name_]) {
+            foreach (ISphere s in atoms_dictionary[isphere.atom_.name_])
+            {
                 s.SetColor(rcolor);
             }
         } else {
