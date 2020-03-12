@@ -14,12 +14,6 @@ public class ISphere : MonoBehaviour
         material_block_ = GetComponent<MaterialBlock>();
     }
 
-    // Update is called once per frame
-    void Update()
-    {
-        
-    }
-
     public void SetColor(Color color) {
         material_block_.SetColor(color);
     }

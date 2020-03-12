@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class Atoms : MonoBehaviour
 {
-    [SerializeField] GameObject prefab_atom;
+    [SerializeField] GameObject prefab_atom = null;
     
     /* A dictionary that holds the type of the atom, and the ISphere object that it corresponds to */
     private Dictionary<string, List<ISphere>> atoms_dictionary = new Dictionary<string, List<ISphere>>();
@@ -19,7 +19,7 @@ public class Atoms : MonoBehaviour
         foreach (Atom atom in atoms) {
             /* Instantiate the object */
             GameObject temp = Instantiate(prefab_atom, new Vector3(atom.x_, atom.y_, atom.z_), Quaternion.identity);
-            temp.transform.parent = this.transform;
+            temp.transform.parent = transform;
 
             /* Find ISphere component, and set the atom */
             ISphere isphere = temp.GetComponent<ISphere>();
@@ -38,8 +38,14 @@ public class Atoms : MonoBehaviour
         atoms_dictionary[atom_name].Add(sphere);
     }
 
+    void OnGUI()
+    {
+        GUI.Label(new Rect(0, 0, 100, 100), (1.0f / Time.smoothDeltaTime).ToString());
+    }
+
     // Update is called once per frame
     void Update() {
+       
         RaycastHit hit;
         bool ret = Physics.Raycast(Camera.main.transform.position, Camera.main.transform.forward, out hit, Mathf.Infinity);
         if (ret) {
