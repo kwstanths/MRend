@@ -9,6 +9,8 @@ public class Atoms : MonoBehaviour
     /* A dictionary that holds the type of the atom, and the ISphere object that it corresponds to */
     private Dictionary<string, List<ISphere>> atoms_dictionary = new Dictionary<string, List<ISphere>>();
 
+    private string previously_highlighted_atom = "";
+
     // Start is called before the first frame update
     void Start()
     {
@@ -52,11 +54,22 @@ public class Atoms : MonoBehaviour
             Debug.DrawRay(Camera.main.transform.position, Camera.main.transform.forward * hit.distance, Color.white);
 
             ISphere isphere = hit.transform.GetComponent<ISphere>();
-            Color rcolor = new Color(Random.Range(0.0f, 1.0f), Random.Range(0.0f, 1.0f), Random.Range(0.0f, 1.0f));
+            if (isphere.atom_.name_.Equals(previously_highlighted_atom)) return;
+
+            //Color rcolor = new Color(Random.Range(0.0f, 1.0f), Random.Range(0.0f, 1.0f), Random.Range(0.0f, 1.0f));
+            if (!previously_highlighted_atom.Equals(""))
+            {
+                foreach (ISphere s in atoms_dictionary[previously_highlighted_atom])
+                {
+                    s.SetHighlighted(false);
+                }
+            }
+
             foreach (ISphere s in atoms_dictionary[isphere.atom_.name_])
             {
-                s.SetColor(rcolor);
+                s.SetHighlighted(true);
             }
+            previously_highlighted_atom = isphere.atom_.name_;
         } else {
 
             Debug.DrawRay(Camera.main.transform.position, Camera.main.transform.forward * 1000, Color.white);

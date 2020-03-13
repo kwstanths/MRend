@@ -15,7 +15,12 @@ public class ISphere : MonoBehaviour
     }
 
     public void SetColor(Color color) {
-        material_block_.SetColor(color);
+        //material_block_.SetColor(color);
+    }
+
+    public void SetHighlighted(bool is_highlighted)
+    {
+        material_block_.SetHighlighted(is_highlighted);
     }
 
     //public void SetRadius(float radius) {

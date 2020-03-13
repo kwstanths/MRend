@@ -1,4 +1,6 @@
-﻿
+﻿// Upgrade NOTE: upgraded instancing buffer 'Props' to new syntax.
+
+
 Shader "Custom/ImpostorSphere"
 {
     Properties{
@@ -6,7 +8,7 @@ Shader "Custom/ImpostorSphere"
         _Radius("_Radius", Float) = 1.0
 
         [Header(Color)]
-        _Albedo("Albedo", Color) = (0.16, 0.17, 0.62, 1)
+        _Albedo("Albedo", Color) = (0.16, 0.17, 0.62, 0)
         _Ambient("Ambient", Float) = 0.2
 
         [Header(Forward Rendering)]
@@ -192,9 +194,9 @@ Shader "Custom/ImpostorSphere"
 
             /* Unpack extra instance properties */
             UNITY_INSTANCING_BUFFER_START(Props)
-            UNITY_DEFINE_INSTANCED_PROP(float4, _Albedo)
+                UNITY_DEFINE_INSTANCED_PROP(float4, _Albedo)
             UNITY_INSTANCING_BUFFER_END(Props)
-
+            
             v2f vert(appdata input)
             {
                v2f output;
@@ -222,6 +224,7 @@ Shader "Custom/ImpostorSphere"
 
                 /* Calculate albedo for this instance */
                 float4 albedo = UNITY_ACCESS_INSTANCED_PROP(Props, _Albedo);
+                float is_highlighted = albedo.w;
 
                 /* Caclulate diffuse and specular component from using Unity's Physically based rendering pipeline */
                 half3 specular;
@@ -233,6 +236,7 @@ Shader "Custom/ImpostorSphere"
                 o.diffuse = float4(diffuseColor, 1);
                 o.specular = half4(specular, GLOSS);
                 o.normal_world.xyz = normal_world * 0.5f + 0.5f;
+                o.normal_world.w = is_highlighted;
                 o.emission.xyz = AMBIENT * diffuseColor;
                 return o;
             }

@@ -49,6 +49,25 @@ MonoBehaviour:
   quality:
     overrideState: 1
     value: 2
+--- !u!114 &-1152066667348275380
+MonoBehaviour:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4e0519259794813419de0e8b79b616a2, type: 3}
+  m_Name: PostProcessingOutline
+  m_EditorClassIdentifier: 
+  active: 1
+  enabled:
+    overrideState: 1
+    value: 1
+  thickness:
+    overrideState: 1
+    value: 3
 --- !u!114 &11400000
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -63,3 +82,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   settings:
   - {fileID: -1684678273299890630}
+  - {fileID: -1152066667348275380}
