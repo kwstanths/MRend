@@ -5,12 +5,13 @@ using UnityEngine;
 
 public class PDBParser
 {
-    public static List<Atom> ParseAtoms(string file_name) {
-        List<Atom> temp = new List<Atom>();
+    public static void ParseAtomsAndConnections(string file_name, out List<Atom> atoms, out List<List<int>> connections) {
+        atoms = new List<Atom>();
+        connections = new List<List<int>>();
 
         if (!File.Exists(file_name)) {
             Debug.Log("File: " + file_name + " not found");
-            return temp;
+            return;
         }
 
         string[] readText = File.ReadAllLines(file_name);
@@ -32,15 +33,42 @@ public class PDBParser
                 string element = s.Substring(76, 2);
                 string charge = s.Substring(78, 2);
 
-                temp.Add(new Atom(serial, atom_name, alt_loc, res_name, chain_id, res_seq, i_code, x, y, z, occupancy, temp_factor, element, charge));
+                atoms.Add(new Atom(serial, atom_name, alt_loc, res_name, chain_id, res_seq, i_code, x, y, z, occupancy, temp_factor, element, charge));
+            } else if (type.Equals("CONECT"))
+            {
+                int atom_id = TryTransformConnection(s.Substring(6, 5));
+                int connected_1 = TryTransformConnection(s.Substring(11, 5));
+                int connected_2 = TryTransformConnection(s.Substring(16, 5));
+                int connected_3 = TryTransformConnection(s.Substring(21, 5));
+                int connected_4 = TryTransformConnection(s.Substring(26, 5));
+                connections.Add(new List<int>());
+                connections[connections.Count - 1].Add(atom_id);
+                connections[connections.Count - 1].Add(connected_1);
+                if (connected_2 != -1) connections[connections.Count - 1].Add(connected_2);
+                if (connected_3 != -1) connections[connections.Count - 1].Add(connected_3);
+                if (connected_4 != -1) connections[connections.Count - 1].Add(connected_4);
             }
+
         }
 
-        Debug.Log("Loaded: " + temp.Count);
-        return temp;
+        Debug.Log("Loaded: " + atoms.Count + " atoms");
+        return;
     }
 
     static public float AngstromsToNanoMeters(float angstroms) {
         return angstroms * 0.1f;
+    }
+
+    static int TryTransformConnection(string number)
+    {
+        try
+        {
+            return System.Int32.Parse(number);
+        }
+        catch (System.FormatException)
+        {
+
+            return -1;
+        }
     }
 }

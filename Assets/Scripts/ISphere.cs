@@ -5,6 +5,7 @@ using UnityEngine;
 public class ISphere : MonoBehaviour
 {
     public Atom atom_;
+    public List<ISphere> connections_ = new List<ISphere>();
 
     private MaterialBlock material_block_;
 
@@ -15,7 +16,7 @@ public class ISphere : MonoBehaviour
     }
 
     public void SetColor(Color color) {
-        //material_block_.SetColor(color);
+        material_block_.SetColor(color);
     }
 
     public void SetHighlighted(bool is_highlighted)

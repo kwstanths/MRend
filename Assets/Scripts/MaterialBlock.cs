@@ -12,10 +12,24 @@ public class MaterialBlock : MonoBehaviour
     //The material property block we pass to the GPU
     private MaterialPropertyBlock property_block;
 
+    public void Start()
+    {
+        _Albedo = new Color(0.16f, 0.17f, 0.62f, 0.0f);
+    }
+
     // OnValidate is called in the editor after the component is edited
     void OnValidate()
     {
         //create propertyblock only if none exists
+        SetPropertyBlock();
+    }
+
+    public void SetColor(Color color)
+    {
+        _Albedo.r = color.r;
+        _Albedo.g = color.g;
+        _Albedo.b = color.b;
+
         SetPropertyBlock();
     }
 
