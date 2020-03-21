@@ -8,7 +8,8 @@ Shader "Custom/ImpostorSphere"
         _Radius("_Radius", Float) = 1.0
 
         [Header(Color)]
-        _Albedo("Albedo", Color) = (0.16, 0.17, 0.62, 0)
+        _Albedo("Albedo", Color) = (1, 0, 0.8, 0)
+        _RadiusAndShading("_RadiusAndShading", Color) = (0.07, 0.7, 0, 0)
         _Ambient("Ambient", Float) = 0.2
 
         [Header(Forward Rendering)]
@@ -68,7 +69,7 @@ Shader "Custom/ImpostorSphere"
             {
                 /* Compute real fragment world position and normal */
                 float3 normal_world, position_world;
-                Impostor(mul(UNITY_MATRIX_I_V, input.view_pos), _Radius, position_world, normal_world);
+                ImpostorSphere(mul(UNITY_MATRIX_I_V, input.view_pos), _Radius, position_world, normal_world);
                 
                 /* Calculate depth */
                 float4 clip = mul(UNITY_MATRIX_VP, float4(position_world, 1.0f));
@@ -131,7 +132,7 @@ Shader "Custom/ImpostorSphere"
             float4 frag(v2f input, out float outDepth : SV_Depth) : COLOR
             {
                 float3 normal_world, position_world;
-                Impostor(mul(UNITY_MATRIX_I_V, input.view_pos), _Radius, position_world, normal_world);
+                ImpostorSphere(mul(UNITY_MATRIX_I_V, input.view_pos), _Radius, position_world, normal_world);
 
                 float4 clip = mul(UNITY_MATRIX_VP, float4(position_world, 1.0f));
                 float z_value = clip.z / clip.w;
@@ -166,10 +167,6 @@ Shader "Custom/ImpostorSphere"
 
             /* Same variables for all instantiated spheres */
             #define BOX_CORRECTION 1.5
-            #define RADIUS 0.07
-            #define AMBIENT 0.7
-            #define METALLIC 0
-            #define GLOSS 0
             
             struct appdata {
                 /* Instance ID */
@@ -195,6 +192,7 @@ Shader "Custom/ImpostorSphere"
             /* Unpack extra instance properties */
             UNITY_INSTANCING_BUFFER_START(Props)
                 UNITY_DEFINE_INSTANCED_PROP(float4, _Albedo)
+                UNITY_DEFINE_INSTANCED_PROP(float4, _RadiusAndShading)
             UNITY_INSTANCING_BUFFER_END(Props)
             
             v2f vert(appdata input)
@@ -203,7 +201,9 @@ Shader "Custom/ImpostorSphere"
                UNITY_SETUP_INSTANCE_ID(input);
                UNITY_TRANSFER_INSTANCE_ID(input, output);
 
-               output.view_pos = mul(UNITY_MATRIX_MV, float4(0.0, 0.0, 0.0, 1.0)) + BOX_CORRECTION * float4(input.vertex.x, input.vertex.y, 0.0, 0.0) * 2.0f * float4(RADIUS, RADIUS, 1.0, 1.0);
+               float radius = UNITY_ACCESS_INSTANCED_PROP(Props, _RadiusAndShading);
+
+               output.view_pos = mul(UNITY_MATRIX_MV, float4(0.0, 0.0, 0.0, 1.0)) + BOX_CORRECTION * float4(input.vertex.x, input.vertex.y, 0.0, 0.0) * 2.0f * float4(radius, radius, 1.0, 1.0);
                output.pos = mul(UNITY_MATRIX_P, output.view_pos);
 
                return output;
@@ -213,9 +213,15 @@ Shader "Custom/ImpostorSphere"
             {
                 UNITY_SETUP_INSTANCE_ID(input);
                 
+                float4 radius_and_shading = UNITY_ACCESS_INSTANCED_PROP(Props, _RadiusAndShading);
+                float radius = radius_and_shading.r;
+                float ambient = radius_and_shading.g;
+                float metallic = radius_and_shading.b;
+                float gloss = radius_and_shading.a;
+
                 /* Compute real fragment world position and normal */
                 float3 normal_world, position_world;
-                Impostor(mul(UNITY_MATRIX_I_V, input.view_pos), RADIUS, position_world, normal_world);
+                ImpostorSphere(mul(UNITY_MATRIX_I_V, input.view_pos), radius, position_world, normal_world);
 
                 /* Calculate depth */
                 float4 clip = mul(UNITY_MATRIX_VP, float4(position_world, 1.0f));
@@ -229,15 +235,15 @@ Shader "Custom/ImpostorSphere"
                 /* Caclulate diffuse and specular component from using Unity's Physically based rendering pipeline */
                 half3 specular;
                 half specularMonochrome;
-                half3 diffuseColor = DiffuseAndSpecularFromMetallic(albedo, METALLIC, specular, specularMonochrome);
+                half3 diffuseColor = DiffuseAndSpecularFromMetallic(albedo, metallic, specular, specularMonochrome);
 
                 /* Set output parameters */
                 fragment_output o;
                 o.diffuse = float4(diffuseColor, 1);
-                o.specular = half4(specular, GLOSS);
+                o.specular = half4(specular, gloss);
                 o.normal_world.xyz = normal_world * 0.5f + 0.5f;
                 o.normal_world.w = is_highlighted;
-                o.emission.xyz = AMBIENT * diffuseColor;
+                o.emission.xyz = ambient * diffuseColor;
                 return o;
             }
             ENDCG

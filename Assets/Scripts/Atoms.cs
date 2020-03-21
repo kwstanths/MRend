@@ -18,8 +18,8 @@ public class Atoms : MonoBehaviour
     {
         List<Atom> atoms;
         List<List<int>> connections;
-        //PDBParser.ParseAtomsAndConnections(@"Assets/MModels/1tes.pdb", out atoms, out connections);
-        PDBParser.ParseAtomsAndConnections(@"Assets/MModels/4f0h.pdb", out atoms, out connections);
+        PDBParser.ParseAtomsAndConnections(@"Assets/MModels/1tes.pdb", out atoms, out connections);
+        //PDBParser.ParseAtomsAndConnections(@"Assets/MModels/4f0h.pdb", out atoms, out connections);
 
         List<ISphere> ispheres = new List<ISphere>();
         foreach (Atom atom in atoms)
@@ -50,7 +50,7 @@ public class Atoms : MonoBehaviour
     }
 
     private void InsertToAtomsDictionary(ISphere sphere) {
-        string atom_name = sphere.atom_.name_;
+        string atom_name = sphere.atom_.element_;
         if (!atoms_dictionary.ContainsKey(atom_name)) {
             atoms_dictionary.Add(atom_name, new List<ISphere>());
         }
@@ -103,7 +103,7 @@ public class Atoms : MonoBehaviour
     private void SetColor(ISphere isphere)
     {
         Color rcolor = new Color(Random.Range(0.0f, 1.0f), Random.Range(0.0f, 1.0f), Random.Range(0.0f, 1.0f));
-        foreach (ISphere s in atoms_dictionary[isphere.atom_.name_])
+        foreach (ISphere s in atoms_dictionary[isphere.atom_.element_])
         {
             s.SetColor(rcolor);
         }
@@ -132,80 +132,6 @@ public class Atoms : MonoBehaviour
             s.SetHighlighted(false);
         }
         previously_highlighted_atom = null;
-    }
-
-    private Material mat_hydrogen_;
-    private Material mat_carbon_;
-    private Material mat_nitrogen_;
-    private Material mat_oxygen_;
-    private Material mat_fclrine_;
-    private Material mat_bromine_;
-    private Material mat_iodine_;
-    private Material mat_noble_gases_;
-    private Material mat_phosphorus_;
-    private Material mat_sulfur_;
-    private Material mat_boron_;
-    private Material mat_alkali_metals_;
-    private Material mat_titanium_;
-    private Material mat_iron_;
-    private Material mat_alkaline_earth_metals_;
-
-    private void ReadMaterials() {
-        mat_hydrogen_ = Resources.Load("Materials/Hydrogen", typeof(Material)) as Material;
-        mat_carbon_ = Resources.Load("Materials/Carbon", typeof(Material)) as Material;
-        mat_nitrogen_ = Resources.Load("Materials/Nitrogen", typeof(Material)) as Material;
-        mat_oxygen_ = Resources.Load("Materials/Oxygen", typeof(Material)) as Material;
-        mat_fclrine_ = Resources.Load("Materials/FCLrine", typeof(Material)) as Material;
-        mat_bromine_ = Resources.Load("Materials/Bromine", typeof(Material)) as Material;
-        mat_iodine_ = Resources.Load("Materials/Iodine", typeof(Material)) as Material;
-        mat_noble_gases_ = Resources.Load("Materials/NobleGases", typeof(Material)) as Material;
-        mat_phosphorus_ = Resources.Load("Materials/Phosphorus", typeof(Material)) as Material;
-        mat_sulfur_ = Resources.Load("Materials/Sulfur", typeof(Material)) as Material;
-        mat_boron_ = Resources.Load("Materials/Boron", typeof(Material)) as Material;
-        mat_alkali_metals_ = Resources.Load("Materials/AlkaliMetals", typeof(Material)) as Material;
-        mat_alkaline_earth_metals_ = Resources.Load("Materials/AlkalineEarthMetals", typeof(Material)) as Material;
-        mat_titanium_ = Resources.Load("Materials/Titanium", typeof(Material)) as Material;
-        mat_iron_ = Resources.Load("Materials/Iron", typeof(Material)) as Material;
-    }
-
-    private void SetMaterial(GameObject go, Atom atom) {
-
-        //if (atom.name_.Contains("C")) go.GetComponent<Renderer>().material = mat_carbon_;
-        //if (atom.name_.Contains("O")) go.GetComponent<Renderer>().material = mat_oxygen_;
-        //if (atom.name_.Contains("H")) go.GetComponent<Renderer>().material = mat_hydrogen_;
-
-
-        //if (atom.name_.Equals("H")) {
-        //    go.GetComponent<Renderer>().material = mat_hydrogen_;
-        //} else if (atom.name_.Equals("C")) {
-        //    go.GetComponent<Renderer>().material = mat_carbon_;
-        //} else if (atom.name_.Equals("N")) {
-        //    go.GetComponent<Renderer>().material = mat_nitrogen_;
-        //} else if (atom.name_.Equals("O")) {
-        //    go.GetComponent<Renderer>().material = mat_oxygen_;
-        //} else if (atom.name_.Equals("F") || atom.name_.Equals("CL")) {
-        //    go.GetComponent<Renderer>().material = mat_fclrine_;
-        //} else if (atom.name_.Equals("BR")) {
-        //    go.GetComponent<Renderer>().material = mat_bromine_;
-        //} else if (atom.name_.Equals("I")) {
-        //    go.GetComponent<Renderer>().material = mat_iodine_;
-        //} else if (atom.name_.Equals("HE") || atom.name_.Equals("NE") || atom.name_.Equals("AR") || atom.name_.Equals("XE") || atom.name_.Equals("KR")) {
-        //    go.GetComponent<Renderer>().material = mat_noble_gases_;
-        //} else if (atom.name_.Equals("P")) {
-        //    go.GetComponent<Renderer>().material = mat_phosphorus_;
-        //} else if (atom.name_.Equals("S")) {
-        //    go.GetComponent<Renderer>().material = mat_sulfur_;
-        //} else if (atom.name_.Equals("B")) {
-        //    go.GetComponent<Renderer>().material = mat_boron_;
-        //} else if (atom.name_.Equals("LI") || atom.name_.Equals("NA") || atom.name_.Equals("K") || atom.name_.Equals("RB") || atom.name_.Equals("CS") || atom.name_.Equals("FR")) {
-        //    go.GetComponent<Renderer>().material = mat_alkali_metals_;
-        //} else if (atom.name_.Equals("BE") || atom.name_.Equals("MG") || atom.name_.Equals("CA") || atom.name_.Equals("SR") || atom.name_.Equals("BA") || atom.name_.Equals("RA")) {
-        //    go.GetComponent<Renderer>().material = mat_alkaline_earth_metals_;
-        //} else if (atom.name_.Equals("TI")) {
-        //    go.GetComponent<Renderer>().material = mat_titanium_;
-        //} else if (atom.name_.Equals("FE")) {
-        //    go.GetComponent<Renderer>().material = mat_iron_;
-        //}
     }
 
 }

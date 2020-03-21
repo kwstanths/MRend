@@ -30,7 +30,7 @@ public class PDBParser
                 float z = AngstromsToNanoMeters(float.Parse(s.Substring(46, 8)));
                 float occupancy = float.Parse(s.Substring(54, 6));
                 float temp_factor = float.Parse(s.Substring(60, 6));
-                string element = s.Substring(76, 2);
+                string element = s.Substring(76, 2).Replace(" ", "");
                 string charge = s.Substring(78, 2);
 
                 atoms.Add(new Atom(serial, atom_name, alt_loc, res_name, chain_id, res_seq, i_code, x, y, z, occupancy, temp_factor, element, charge));
