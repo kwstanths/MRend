@@ -4,21 +4,15 @@
 Shader "Custom/ImpostorSphere"
 {
     Properties{
-        [Header(Transform)]
+        [Header(Forward rendering)]
         _Radius("_Radius", Float) = 1.0
-
-        [Header(Color)]
-        _Albedo("Albedo", Color) = (1, 0, 0.8, 0)
-        _RadiusAndShading("_RadiusAndShading", Color) = (0.07, 0.7, 0, 0)
         _Ambient("Ambient", Float) = 0.2
-
-        [Header(Forward Rendering)]
         _Shininess("Shininess", Range(0, 128)) = 32
         _SpecularIntensity("Specular intensity", Range(0, 1)) = 0.2
 
-        [Header(Deferred Rendering)]
-        _MetallicC("Metallic", Range(0, 1)) = 1
-        _Gloss("Gloss", Range(0, 1)) = 0.8
+        [Header(Deferred rendering)]
+        _Albedo("Albedo", Color) = (1, 0, 0.8, 0)
+        _RadiusAndShading("_RadiusAndShading", Color) = (0.07, 0.7, 0, 0)
     }
 
     SubShader {
@@ -157,15 +151,21 @@ Shader "Custom/ImpostorSphere"
             Tags { "LightMode" = "Deferred" }
             CGPROGRAM
 
-            #pragma vertex vert  
+            #pragma target 3.0
+            /* Exclude GPU that don't support Multi Target Rendering */
+            #pragma exclude_renderers nomrt
+
+            /* Define the vertex and fragment shader programs */
+            #pragma vertex vert
             #pragma fragment frag
+            /* Add multi compiling support for instancing */
             #pragma multi_compile_instancing
+            #pragma multi_compile_shadowcaster
 
             #include "UnityCG.cginc"
             #include "Impostor.cginc"
             #include "UnityPBSLighting.cginc"
 
-            /* Same variables for all instantiated spheres */
             #define BOX_CORRECTION 1.5
             
             struct appdata {
@@ -211,11 +211,12 @@ Shader "Custom/ImpostorSphere"
 
             fragment_output frag(v2f input, out float outDepth : SV_Depth) : COLOR
             {
+                /* Set up instance id */
                 UNITY_SETUP_INSTANCE_ID(input);
                 
                 float4 radius_and_shading = UNITY_ACCESS_INSTANCED_PROP(Props, _RadiusAndShading);
                 float radius = radius_and_shading.r;
-                float ambient = radius_and_shading.g;
+                float ambient_factor = radius_and_shading.g;
                 float metallic = radius_and_shading.b;
                 float gloss = radius_and_shading.a;
 
@@ -232,10 +233,10 @@ Shader "Custom/ImpostorSphere"
                 float4 albedo = UNITY_ACCESS_INSTANCED_PROP(Props, _Albedo);
                 float is_highlighted = albedo.w;
 
-                /* Caclulate diffuse and specular component from using Unity's Physically based rendering pipeline */
+                /* Calculate diffuse and specular component from using Unity's Physically based rendering pipeline */
                 half3 specular;
                 half specularMonochrome;
-                half3 diffuseColor = DiffuseAndSpecularFromMetallic(albedo, metallic, specular, specularMonochrome);
+                half3 diffuseColor = DiffuseAndSpecularFromMetallic(albedo.xyz, metallic, specular, specularMonochrome);
 
                 /* Set output parameters */
                 fragment_output o;
@@ -243,7 +244,7 @@ Shader "Custom/ImpostorSphere"
                 o.specular = half4(specular, gloss);
                 o.normal_world.xyz = normal_world * 0.5f + 0.5f;
                 o.normal_world.w = is_highlighted;
-                o.emission.xyz = ambient * diffuseColor;
+                o.emission.xyz = ambient_factor * diffuseColor;
                 return o;
             }
             ENDCG

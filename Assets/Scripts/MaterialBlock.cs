@@ -10,11 +10,16 @@ public class MaterialBlock : MonoBehaviour
     //RGB = albedo, A = is highlighted or not
     private Color _Albedo = new Color(1.0f, 0, 0.8f, 0.0f);
     // R = radius, G = ambient component, B = metallicness, A = glossiness
-    private Color _RadiusAndShading = new Color(0.07f, 0.7f, 0, 0);
+    public Color _RadiusAndShading = new Color(0.07f, 0.7f, 1, 0.658f);
 
     public void Start()
     {
 
+    }
+
+    private void OnValidate()
+    {
+        SetPropertyBlock();
     }
 
     public void SetColor(Color color)

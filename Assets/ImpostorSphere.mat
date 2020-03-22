@@ -81,9 +81,9 @@ Material:
     - _UVSec: 0
     - _ZWrite: 1
     m_Colors:
-    - _Albedo: {r: 1, g: 0, b: 0.80784315, a: 0}
+    - _Albedo: {r: 0.745283, g: 0.20741367, b: 0.63770926, a: 0}
     - _Color: {r: 0.15961024, g: 0.1372549, b: 0.8392157, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
     - _Is_Highlighted: {r: 0, g: 0.17, b: 0.62, a: 1}
-    - _RadiusAndShading: {r: 0.07058824, g: 0.7, b: 0, a: 0}
+    - _RadiusAndShading: {r: 0.07, g: 0, b: 0, a: 0.658}
     - _RadiusShading: {r: 0.07, g: 0.7, b: 0, a: 0}

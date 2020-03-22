@@ -96,7 +96,7 @@ public class Atoms : MonoBehaviour
             {
                 RemoveHighlightFromPrevious();
             }
-            Debug.DrawRay(Camera.main.transform.position, Camera.main.transform.forward * 1000, Color.white);
+            //Debug.DrawRay(Camera.main.transform.position, Camera.main.transform.forward * 1000, Color.white);
         }
     }
 
