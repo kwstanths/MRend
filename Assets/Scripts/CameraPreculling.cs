@@ -26,7 +26,7 @@ public class CameraPreculling : MonoBehaviour
 
     private void OnPreCull()
     {
-        /* Chane the field of view used for culling */
+        /* Change the field of view used for culling */
         cam.fieldOfView = cam_old_fov + fov_addition;
     }
 

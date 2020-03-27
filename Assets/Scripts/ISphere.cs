@@ -48,7 +48,7 @@ public class ISphere : MonoBehaviour
         }
         catch
         {
-            print("Atom: " + atom_.serial_ + ", Element: " + atom_.element_ + " does not have atomic radius set");
+            //print("Atom: " + atom_.serial_ + ", Element: " + atom_.element_ + " does not have atomic radius set");
         }
     }
     

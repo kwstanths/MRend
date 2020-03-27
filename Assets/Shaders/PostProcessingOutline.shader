@@ -3,38 +3,44 @@
     HLSLINCLUDE
     #include "Packages/com.unity.postprocessing/PostProcessing/Shaders/StdLib.hlsl"
 
+    /* Currently drawn texture */
     TEXTURE2D_SAMPLER2D(_MainTex, sampler_MainTex);
+    /* Thickness parameter */
     int _Thickness;
+    /* The Gbuffer render target with the highlighted information */
     sampler2D _CameraGBufferTexture2;
+    /* The size inforamtion for the above texture */
     float4 _CameraGBufferTexture2_TexelSize;
 
     float4 Frag(VaryingsDefault i) : SV_Target
     {
+        /* Get size information */
         float2 tex_size = _CameraGBufferTexture2_TexelSize.xy;
+        /* Get value for current fragment */
         float selected_value = tex2D(_CameraGBufferTexture2, i.texcoord).w;
         bool is_border = false;
-        if (selected_value == 1)
-        {
+        /* If this fragment is highlighted, it could belong to the border */
+        if (selected_value == 1) {
+            /* Sample a number of fragments around, and if any of them is not highlighted
+                then this fragment belongs to the border */
             [loop]
-            for (int x = -_Thickness; x <= +_Thickness; x++)
-            {
+            for (int x = -_Thickness; x <= +_Thickness; x++) {
                 [loop]
-                for (int y = -_Thickness; y <= +_Thickness; y++)
-                {
-                    if (x == 0 && y == 0)
-                    {
+                for (int y = -_Thickness; y <= +_Thickness; y++) {
+                    if (x == 0 && y == 0) {
                         continue;
                     }
                     float2 offset = float2(x, y) * tex_size;
-                    if (tex2D(_CameraGBufferTexture2, i.texcoord + offset).w == 0)
-                    {
+                    if (tex2D(_CameraGBufferTexture2, i.texcoord + offset).w == 0) {
                         is_border = true;
                     }
                 }
             }
         }
         
+        /* If it's border return color of outline */
         if (is_border) return float4(1, 1, 1, 1);
+        /* Otherwise, return previous color */
         return SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, i.texcoord);
     }
 

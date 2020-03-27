@@ -5,7 +5,7 @@ using UnityEngine;
 public class CPKColors 
 {
     public static Color color_hydrogen_ = Color.white;
-    public static Color color_carbon_ = Color.black;
+    public static Color color_carbon_ = new Color(0.08f, 0.08f, 0.08f);
     public static Color color_nitrogen_ = Color.blue;
     public static Color color_oxygen_ = Color.red;
     public static Color color_fclrine_ = Color.green;

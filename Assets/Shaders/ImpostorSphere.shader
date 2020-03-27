@@ -160,7 +160,6 @@ Shader "Custom/ImpostorSphere"
             #pragma fragment frag
             /* Add multi compiling support for instancing */
             #pragma multi_compile_instancing
-            #pragma multi_compile_shadowcaster
 
             #include "UnityCG.cginc"
             #include "Impostor.cginc"
