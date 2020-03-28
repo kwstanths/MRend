@@ -4,13 +4,16 @@ using UnityEngine;
 
 public class ICylinder : MonoBehaviour
 {
-    private float radius_;
-    private float height_;
+    public float radius_ = 0.03f;
+    public float height_ = 0.5f;
     private float radius_correction_ = 2.2f;
     private float height_correction_ = 1.0f;
     private Matrix4x4 inverse_transform_;
     private Material mat_;
 
+    private void Awake()
+    {
+    }
 
     void Start()
     {
@@ -19,15 +22,15 @@ public class ICylinder : MonoBehaviour
         mat_ = GetComponent<Renderer>().material;
         mat_.SetMatrix("_InverseTransform", inverse_transform_);
 
-        SetRadius(0.02f);
-        SetHeight(1f);
+        SetRadius(radius_);
+        SetHeight(height_);
     }
 
     //Update is called once per frame
     void Update()
     {
-        CalculateInverseTransform();
-        GetComponent<Renderer>().material.SetMatrix("_InverseTransform", inverse_transform_);
+        //CalculateInverseTransform();
+        //GetComponent<Renderer>().material.SetMatrix("_InverseTransform", inverse_transform_);
 
         //SetRadius(0.3f);
         //SetHeight(1.3f);

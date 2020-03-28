@@ -69,7 +69,7 @@
 
                 half3 specular;
                 half specularMonochrome;
-                half3 diffuseColor = DiffuseAndSpecularFromMetallic(float3(1,0,0), 0, specular, specularMonochrome);
+                half3 diffuseColor = DiffuseAndSpecularFromMetallic(float3(0.5,0,0), 0, specular, specularMonochrome);
 
                 fragment_output o;
                 o.diffuse = float4(diffuseColor, 1);

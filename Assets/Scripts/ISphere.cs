@@ -17,7 +17,15 @@ public class ISphere : MonoBehaviour
     {
         material_block_ = GetComponent<MaterialBlock>();
         SetCPKColor();
-        SetAtomicRadius();
+
+        if (GetComponentInParent<Atoms>().GetVisualizationMethod() == VisualizationMethod.SPACE_FILLING)
+        {
+            SetAtomicRadius();
+        }
+        else
+        {
+            SetRadius(AtomicRadii.ball_and_stick_radius);
+        }
     }
 
     public void SetColor(Color color) {
@@ -43,7 +51,7 @@ public class ISphere : MonoBehaviour
     {
         try
         {
-            float radius = AtomicRadii.radii_covalent[atom_.element_];
+            float radius = AtomicRadii.GetCovalentRadius(atom_.element_);
             SetRadius(radius);
         }
         catch

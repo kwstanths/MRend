@@ -4,6 +4,9 @@ using UnityEngine;
 
 public class AtomicRadii 
 {
+    /* In nanometers */
+    public static float ball_and_stick_radius = 0.04f;
+
     /* A map that holds the covalent atomic radius for every element */
     public static Dictionary<string, float> radii_covalent = new Dictionary<string, float>(){
         {"H",  0.025f },
@@ -13,8 +16,14 @@ public class AtomicRadii
         {"C",  0.07f },
         {"N",  0.065f },
         {"O",  0.06f },
+        {"F",  0.05f },
+
+        {"S",  0.1f },
 
         {"FE", 0.140f },
+
+        /* Deuterium is not present in the atomic table, but some atoms in PDF files are of this type */
+        {"D",  2.1f * 0.000001f },
     };
 
     public static Dictionary<string, float> radii_vanderwaals = new Dictionary<string, float>(){
@@ -28,4 +37,17 @@ public class AtomicRadii
 
         {"FE", 0.240f },
     };
+
+    public static float GetCovalentRadius(string element)
+    {
+        try
+        {
+            return radii_covalent[element];
+        }
+        catch (System.Exception)
+        {
+            Debug.Log("Can't find covalent radius for element: " + element);
+            throw;
+        }
+    }
 }
