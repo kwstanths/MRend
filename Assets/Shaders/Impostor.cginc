@@ -46,7 +46,7 @@ void ImpostorCylinder(float3 fragment_position_worldspace, float3 cylinder_direc
 
     /* Transform to cylinder space coordinates, cylinder base should be at XZ plane, cylinder direction towards Y axis */
     float3 ray_origin_cyl = mul(cylinder_inverse_transform, float4(ray_origin_world, 1));
-    float3 ray_direction_cyl = mul(cylinder_inverse_transform, float4(ray_direction_world, 0));
+    float3 ray_direction_cyl = normalize(mul(cylinder_inverse_transform, float4(ray_direction_world, 0)));
 
     /* Perform ray casting in the above cylidner space, and calculate intersection with the infinite cylinder at XZ plane and cylinder_radius */
     float a = ray_direction_cyl.x * ray_direction_cyl.x + ray_direction_cyl.z * ray_direction_cyl.z;
@@ -82,48 +82,39 @@ void ImpostorCylinder(float3 fragment_position_worldspace, float3 cylinder_direc
     normal_worldspace = normalize(position_worldspace - cyl_normal_center);
 }
 
+float GetDistanceFromPointToLine(float3 A, float3 start, float3 direction) {
+    float projection = dot(A - start, direction);
+    return distance(A, start + projection * direction);
+}
+
 void ImpostorCylinder2(float3 fragment_position_worldspace, float3 cylinder_direction_worldspace, float cylinder_radius,
     float cylinder_height, inout float3 position_worldspace, inout float3 normal_worldspace)
 {
-    float3 fragment_pos = fragment_position_worldspace;
+    float3 C = mul(UNITY_MATRIX_M, float4(0.0, 0.0, 0.0, 1.0)).xyz;
+    float3 e = cylinder_direction_worldspace;
+    float r = cylinder_radius;
 
-    /* Calculate ray origin and direction in world space coordiantes */
-    float3 ray_origin_world = _WorldSpaceCameraPos.xyz;
-    float3 ray_direction_world = normalize(fragment_pos - _WorldSpaceCameraPos.xyz);
+    float3 P = _WorldSpaceCameraPos.xyz;
+    float3 v = normalize(fragment_position_worldspace - _WorldSpaceCameraPos.xyz);
 
-    float3 pa = mul(UNITY_MATRIX_M, float4(0.0, 0.0, 0.0, 1.0)).xyz;
-    float3 va = cylinder_direction_worldspace;
-    float3 p = ray_origin_world;
-    float3 v = ray_direction_world;
+    float CPe = dot(C - P, e);
+    float CPv = dot(C - P, v);
+    float ev = dot(e, v);
 
-    /* Perform ray casting in the above cylidner space, and calculate intersection with the infinite cylinder at XZ plane and cylinder_radius */
-    float3 Dp = p - pa;
-    float3 dotva = float3(va.x * dot(v, va), va.y * dot(v, va), va.z * dot(v, va));
-    float3 dotpa = float3(va.x * dot(Dp, va), va.y * dot(Dp, va), va.z * dot(Dp, va));
+    float lambda = (ev / (pow(ev, 2) - 1)) * (CPe - CPv / ev);
 
-    float A = (v - dotva) * (v - dotva);
-    float B = 2 * dot(v - dotva, Dp - dotpa);
-    float C = (Dp - dotpa) * (Dp - dotpa) - cylinder_radius * cylinder_radius;
+    float3 A = P + lambda * v;
+    float d = GetDistanceFromPointToLine(A, C, e);
+    clip(r - d);
+    float l_prime = lambda - sqrt((pow(r, 2) - pow(d, 2)) / (1 - pow(ev,2)));
 
-    /* If delta is negative, no intersection */
-    float delta = B * B - 4 * A * C;
-    clip(delta);
+    position_worldspace = P + l_prime * v;
+    
+    float projection = dot(position_worldspace - C, e);
+    clip(projection);
+    clip(cylinder_height - projection);
 
-    /* Solve equation, find the two points */
-    delta = sqrt(delta);
-    float t1 = (0.5f) * (-B + delta) / A;
-    float t2 = (0.5f) * (-B - delta) / A;
-    /* Get the closest point */
-    float t = min(t1, t2);
-
-    t = t / 3;
-    position_worldspace = float3(t, t, t);
-    float projection = dot(position_worldspace - pa, cylinder_direction_worldspace);
-    //clip(projection);
-    //clip(cylinder_height - projection);
-
-    float3 axis_point = pa + projection * cylinder_direction_worldspace;
-    normal_worldspace = normalize(position_worldspace - axis_point);
+    normal_worldspace = normalize(position_worldspace - (C + projection * e));
 }
 
 #endif

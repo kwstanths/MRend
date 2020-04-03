@@ -13,6 +13,8 @@ public class Atoms : MonoBehaviour
     [SerializeField] GameObject prefab_atom = null;
     [SerializeField] GameObject prefab_bond = null;
 
+    /* */
+    List<ISphere> ispheres_ = new List<ISphere>();
     /* A dictionary that holds the type of the atom, and all the ISphere objects in the scene */
     private Dictionary<string, List<ISphere>> atoms_dictionary = new Dictionary<string, List<ISphere>>();
     /* A dictionary that holds the resiude id, and all the ISphere objects that form it */
@@ -30,7 +32,6 @@ public class Atoms : MonoBehaviour
         PDBParser.ParseAtomsAndConnections(@"Assets/MModels/1tes.pdb", out atoms, out connections);
         //PDBParser.ParseAtomsAndConnections(@"Assets/MModels/4f0h.pdb", out atoms, out connections);
 
-        List<ISphere> ispheres = new List<ISphere>();
         foreach (Atom atom in atoms)
         {
             /* Instantiate the object */
@@ -40,7 +41,7 @@ public class Atoms : MonoBehaviour
             /* Find ISphere component, and set the atom */
             ISphere isphere = temp.GetComponent<ISphere>();
             isphere.atom_ = atom;
-            ispheres.Add(isphere);
+            ispheres_.Add(isphere);
 
             /* Insert to dictionary */
             InsertToAtomsDictionary(isphere);
@@ -52,8 +53,8 @@ public class Atoms : MonoBehaviour
             int atom_id = c[0];
             for (int i = 1; i < c.Count; i++)
             {
-                ISphere connection_isphere = ispheres[c[i]];
-                ispheres[atom_id].connections_.Add(connection_isphere);
+                ISphere connection_isphere = ispheres_[c[i]];
+                ispheres_[atom_id].connections_.Add(connection_isphere);
             }
         }
 

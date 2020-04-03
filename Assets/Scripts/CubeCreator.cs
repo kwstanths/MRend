@@ -2,13 +2,42 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class CubeCreator : MonoBehaviour
+/**
+    A class the creates a cube mesh that sits on top of the xz plane, aimed to be used by Cylinder impostors
+    In order to support instancing, all cylinders must use the same Mesh object, and thus, this is a Singleton class
+*/
+public class CubeCreator
 {
+    /* Singleton instance */
+    private static CubeCreator instance_;
+    /* Single mesh object */
+    private Mesh mesh_;
 
-    public void Start()
+    private CubeCreator()
     {
-        MeshFilter meshFilter = gameObject.AddComponent<MeshFilter>();
-        Mesh mesh = new Mesh();
+        SpawnMesh();
+    }
+
+    public static CubeCreator Instance
+    {
+        get {
+            if (instance_ == null)
+            {
+                instance_ = new CubeCreator();
+            }
+            return instance_;
+        }
+    }
+
+    public Mesh GetCubeMesh()
+    {
+        return mesh_;
+    }
+
+    public void SpawnMesh()
+    {
+        /* Spawn the mesh */
+        mesh_ = new Mesh();
 
         Vector3[] vertices = new Vector3[8]
         {
@@ -21,7 +50,7 @@ public class CubeCreator : MonoBehaviour
             new Vector3(0.500000f, 0.000000f, -0.500000f),
             new Vector3(0.500000f, 1.000000f, -0.500000f),
         };
-        mesh.vertices = vertices;
+        mesh_.vertices = vertices;
 
         int[] tris = new int[]
         {
@@ -38,8 +67,6 @@ public class CubeCreator : MonoBehaviour
             6,4,0,
             3,1,5
         };
-        mesh.triangles = tris;
-
-        meshFilter.mesh = mesh;
+        mesh_.triangles = tris;
     }
 }

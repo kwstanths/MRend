@@ -8,8 +8,7 @@ public class ICylinder : MonoBehaviour
     public float height_ = 0.5f;
     private float radius_correction_ = 2.2f;
     private float height_correction_ = 1.0f;
-    private Matrix4x4 inverse_transform_;
-    private Material mat_;
+    private MaterialBlockCylinder material_block_;
 
     private void Awake()
     {
@@ -17,37 +16,38 @@ public class ICylinder : MonoBehaviour
 
     void Start()
     {
-        CalculateInverseTransform();
+        /* Get and set the cube mesh instance */
+        Mesh mesh = CubeCreator.Instance.GetCubeMesh();
+        MeshFilter meshFilter = gameObject.AddComponent<MeshFilter>();
+        meshFilter.mesh = mesh;
+        
+        /* Initialize the material property block */
+        material_block_ = GetComponent<MaterialBlockCylinder>();
 
-        mat_ = GetComponent<Renderer>().material;
-        mat_.SetMatrix("_InverseTransform", inverse_transform_);
-
+        /* Set radius and height */
         SetRadius(radius_);
         SetHeight(height_);
     }
 
-    //Update is called once per frame
-    void Update()
-    {
-        //CalculateInverseTransform();
-        //GetComponent<Renderer>().material.SetMatrix("_InverseTransform", inverse_transform_);
-
-        //SetRadius(0.3f);
-        //SetHeight(1.3f);
-    }
+    ////Update is called once per frame
+    //void Update()
+    //{
+    //    SetRadius(radius_);
+    //    SetHeight(height_);
+    //}
 
     public void SetRadius(float radius)
     {
         radius_ = radius;
-        transform.localScale = new Vector3(radius_ * radius_correction_, height_ * height_correction_, radius_ * radius_correction_) ;
-        mat_.SetFloat("_Radius", radius);
+        transform.localScale = new Vector3(radius_ * radius_correction_, height_ * height_correction_, radius_ * radius_correction_);
+        material_block_.SetRadius(radius);
     }
 
     public void SetHeight(float height)
     {
         height_ = height;
         transform.localScale = new Vector3(radius_ * radius_correction_, height_ * height_correction_, radius_ * radius_correction_);
-        mat_.SetFloat("_Height", height);
+        material_block_.SetHeight(height);
     }
 
     private void CalculateInverseTransform()
@@ -57,6 +57,7 @@ public class ICylinder : MonoBehaviour
         Vector3 X = Vector3.Normalize(Vector3.Cross(Y, new Vector3(0, Y.z, Y.y)));
         Vector3 Z = Vector3.Normalize(Vector3.Cross(X, Y));
 
-        inverse_transform_ = Matrix4x4.Inverse(new Matrix4x4(new Vector4(X.x, X.y, X.z, 0), new Vector4(Y.x, Y.y, Y.z, 0), new Vector4(Z.x, Z.y, Z.z, 0), new Vector4(O.x, O.y, O.z, 1)));
+        Matrix4x4 inverse_transform;
+        inverse_transform = Matrix4x4.Inverse(new Matrix4x4(new Vector4(X.x, X.y, X.z, 0), new Vector4(Y.x, Y.y, Y.z, 0), new Vector4(Z.x, Z.y, Z.z, 0), new Vector4(O.x, O.y, O.z, 1)));
     }
 }

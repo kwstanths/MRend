@@ -1,15 +1,14 @@
-﻿using System;
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class MaterialBlock : MonoBehaviour
+public class MaterialBlockCylinder : MonoBehaviour
 {
     //The material property block we pass to the GPU
     private MaterialPropertyBlock property_block;
-    //RGB = albedo, A = is highlighted or not
-    private Color _Albedo = new Color(1.0f, 0, 0.8f, 0.0f);
-    // R = radius, G = ambient component, B = metallicness, A = glossiness
+    //RGB = albedo, A = radius
+    public Color _Albedo = new Color(0.5f, 0, 0, 0.015f);
+    // R = height, G = ambient, B = metallic, A = glossiness
     public Color _RadiusAndShading = new Color(0.07f, 0.7f, 0, 0);
 
     public void Start()
@@ -18,6 +17,11 @@ public class MaterialBlock : MonoBehaviour
     }
 
     private void OnValidate()
+    {
+        SetPropertyBlock();
+    }
+
+    public void Update()
     {
         SetPropertyBlock();
     }
@@ -31,15 +35,33 @@ public class MaterialBlock : MonoBehaviour
         SetPropertyBlock();
     }
 
-    public void SetHighlighted(bool is_highlighted)
+    public void SetRadius(float radius)
     {
-        _Albedo.a = (is_highlighted) ? 255 : 0;
+        _Albedo.a = radius;
         SetPropertyBlock();
     }
 
-    public void SetRadius(float radius)
+    public void SetHeight(float height)
     {
-        _RadiusAndShading.r = radius;
+        _RadiusAndShading.r = height;
+        SetPropertyBlock();
+    }
+
+    public void SetAmbientComponent(float ambient)
+    {
+        _RadiusAndShading.g = ambient;
+        SetPropertyBlock();
+    }
+
+    public void SetMetallic(float metallic)
+    {
+        _RadiusAndShading.b = metallic;
+        SetPropertyBlock();
+    }
+
+    public void SetGlossiness(float glossy)
+    {
+        _RadiusAndShading.a = glossy;
         SetPropertyBlock();
     }
 
@@ -58,5 +80,4 @@ public class MaterialBlock : MonoBehaviour
         //apply propertyBlock to renderer
         renderer.SetPropertyBlock(property_block);
     }
-
 }

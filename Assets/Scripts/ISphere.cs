@@ -7,7 +7,7 @@ public class ISphere : MonoBehaviour
     public Atom atom_;
     public List<ISphere> connections_ = new List<ISphere>();
 
-    private MaterialBlock material_block_;
+    private MaterialBlockSphere material_block_;
 
     private void Awake()
     {
@@ -15,7 +15,7 @@ public class ISphere : MonoBehaviour
 
     private void Start()
     {
-        material_block_ = GetComponent<MaterialBlock>();
+        material_block_ = GetComponent<MaterialBlockSphere>();
         SetCPKColor();
 
         if (GetComponentInParent<Atoms>().GetVisualizationMethod() == VisualizationMethod.SPACE_FILLING)
