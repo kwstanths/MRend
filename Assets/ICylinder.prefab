@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 8604951634814390506}
   - component: {fileID: 8604951634814390295}
   - component: {fileID: 6959653568002104392}
+  - component: {fileID: 59083847}
   m_Layer: 0
   m_Name: ICylinder
   m_TagString: Untagged
@@ -28,7 +29,7 @@ Transform:
   m_GameObject: {fileID: 8604951634814390507}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 0.2, y: 0.2, z: 0.2}
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 0
@@ -84,8 +85,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f35d1dcd5f2760f47a6447a9a4f0662e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  radius_: 0.03
-  height_: 0.5
+  radius_: 0.2
+  height_: 0.7
 --- !u!114 &6959653568002104392
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -100,3 +101,17 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _Albedo: {r: 0.49803922, g: 0, b: 0, a: 0.09411765}
   _RadiusAndShading: {r: 0.93333334, g: 0.69803923, b: 0, a: 0}
+--- !u!136 &59083847
+CapsuleCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8604951634814390507}
+  m_Material: {fileID: 0}
+  m_IsTrigger: 0
+  m_Enabled: 1
+  m_Radius: 0.5
+  m_Height: 1
+  m_Direction: 1
+  m_Center: {x: 0, y: 0.5, z: 0}

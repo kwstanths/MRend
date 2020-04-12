@@ -90,26 +90,38 @@ float GetDistanceFromPointToLine(float3 A, float3 start, float3 direction) {
 void ImpostorCylinder2(float3 fragment_position_worldspace, float3 cylinder_direction_worldspace, float cylinder_radius,
     float cylinder_height, inout float3 position_worldspace, inout float3 normal_worldspace)
 {
+    /* Calculate geometry cylinder data, assume cylinder center is at (0,0,0) object space */
     float3 C = mul(UNITY_MATRIX_M, float4(0.0, 0.0, 0.0, 1.0)).xyz;
     float3 e = cylinder_direction_worldspace;
     float r = cylinder_radius;
 
+    /* Calculate ray */
     float3 P = _WorldSpaceCameraPos.xyz;
     float3 v = normalize(fragment_position_worldspace - _WorldSpaceCameraPos.xyz);
 
+    /* Precalculate some values used more than twice */
     float CPe = dot(C - P, e);
     float CPv = dot(C - P, v);
     float ev = dot(e, v);
 
+    /* Calculate lambda for the point A that is closest on the cylinder axis */
     float lambda = (ev / (pow(ev, 2) - 1)) * (CPe - CPv / ev);
-
+    /* Calulcate point A */
     float3 A = P + lambda * v;
+    /* Calculate the distance of that point to the cylinder axis */
     float d = GetDistanceFromPointToLine(A, C, e);
+    /* If negative, discard fragment */
     clip(r - d);
+    /* Calculate the intersection point lambda value */
     float l_prime = lambda - sqrt((pow(r, 2) - pow(d, 2)) / (1 - pow(ev,2)));
-
+    /* Calulcate intersection point */
     position_worldspace = P + l_prime * v;
     
+    /* 
+        Calculate normal of that intersection point 
+        project that point on the cylinder axis, clip the projection based on the height required
+        and then calculate normal using the projection to find the corresponding point on the axis
+    */
     float projection = dot(position_worldspace - C, e);
     clip(projection);
     clip(cylinder_height - projection);

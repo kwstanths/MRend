@@ -34,20 +34,21 @@ public class PDBParser
                 string charge = s.Substring(78, 2);
 
                 atoms.Add(new Atom(serial, atom_name, alt_loc, res_name, chain_id, res_seq, i_code, x, y, z, occupancy, temp_factor, element, charge));
-            } else if (type.Equals("CONECT"))
-            {
-                int atom_id = TryTransformConnection(s.Substring(6, 5));
-                int connected_1 = TryTransformConnection(s.Substring(11, 5));
-                int connected_2 = TryTransformConnection(s.Substring(16, 5));
-                int connected_3 = TryTransformConnection(s.Substring(21, 5));
-                int connected_4 = TryTransformConnection(s.Substring(26, 5));
-                connections.Add(new List<int>());
-                connections[connections.Count - 1].Add(atom_id);
-                connections[connections.Count - 1].Add(connected_1);
-                if (connected_2 != -1) connections[connections.Count - 1].Add(connected_2);
-                if (connected_3 != -1) connections[connections.Count - 1].Add(connected_3);
-                if (connected_4 != -1) connections[connections.Count - 1].Add(connected_4);
             }
+            //else if (type.Equals("CONECT"))
+            //{
+            //    int atom_id = TryTransformConnection(s.Substring(6, 5));
+            //    int connected_1 = TryTransformConnection(s.Substring(11, 5));
+            //    int connected_2 = TryTransformConnection(s.Substring(16, 5));
+            //    int connected_3 = TryTransformConnection(s.Substring(21, 5));
+            //    int connected_4 = TryTransformConnection(s.Substring(26, 5));
+            //    connections.Add(new List<int>());
+            //    connections[connections.Count - 1].Add(atom_id);
+            //    connections[connections.Count - 1].Add(connected_1);
+            //    if (connected_2 != -1) connections[connections.Count - 1].Add(connected_2);
+            //    if (connected_3 != -1) connections[connections.Count - 1].Add(connected_3);
+            //    if (connected_4 != -1) connections[connections.Count - 1].Add(connected_4);
+            //}
 
         }
 

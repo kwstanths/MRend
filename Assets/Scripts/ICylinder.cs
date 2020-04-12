@@ -10,10 +10,6 @@ public class ICylinder : MonoBehaviour
     private float height_correction_ = 1.0f;
     private MaterialBlockCylinder material_block_;
 
-    private void Awake()
-    {
-    }
-
     void Start()
     {
         /* Get and set the cube mesh instance */
@@ -29,18 +25,14 @@ public class ICylinder : MonoBehaviour
         SetHeight(height_);
     }
 
-    ////Update is called once per frame
-    //void Update()
-    //{
-    //    SetRadius(radius_);
-    //    SetHeight(height_);
-    //}
-
     public void SetRadius(float radius)
     {
         radius_ = radius;
         transform.localScale = new Vector3(radius_ * radius_correction_, height_ * height_correction_, radius_ * radius_correction_);
         material_block_.SetRadius(radius);
+
+        float scaling = transform.localScale.x;
+        GetComponent<CapsuleCollider>().radius = radius_ / scaling;
     }
 
     public void SetHeight(float height)
@@ -48,6 +40,9 @@ public class ICylinder : MonoBehaviour
         height_ = height;
         transform.localScale = new Vector3(radius_ * radius_correction_, height_ * height_correction_, radius_ * radius_correction_);
         material_block_.SetHeight(height);
+
+        float scaling = transform.localScale.y;
+        GetComponent<CapsuleCollider>().height = height/ scaling;
     }
 
     private void CalculateInverseTransform()

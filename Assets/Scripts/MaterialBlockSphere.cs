@@ -17,16 +17,6 @@ public class MaterialBlockSphere : MonoBehaviour
 
     }
 
-    public void Update()
-    {
-        SetPropertyBlock();
-    }
-
-    private void OnValidate()
-    {
-        SetPropertyBlock();
-    }
-
     public void SetColor(Color color)
     {
         _Albedo.r = color.r;

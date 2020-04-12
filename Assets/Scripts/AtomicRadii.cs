@@ -7,6 +7,9 @@ public class AtomicRadii
     /* In nanometers */
     public static float ball_and_stick_radius = 0.04f;
 
+    /* */
+    public static float ball_and_stick_bond_radius = 0.014f;
+
     /* A map that holds the covalent atomic radius for every element */
     public static Dictionary<string, float> radii_covalent = new Dictionary<string, float>(){
         {"H",  0.025f },
@@ -18,8 +21,14 @@ public class AtomicRadii
         {"O",  0.06f },
         {"F",  0.05f },
 
+        {"MG", 0.150f },
+
+        {"P",  0.1f },
         {"S",  0.1f },
 
+        {"CA", 0.180f},
+
+        {"MN", 0.140f },
         {"FE", 0.140f },
 
         /* Deuterium is not present in the atomic table, but some atoms in PDF files are of this type */
@@ -44,7 +53,7 @@ public class AtomicRadii
         {
             return radii_covalent[element];
         }
-        catch (System.Exception)
+        catch (System.Exception e)
         {
             Debug.Log("Can't find covalent radius for element: " + element);
             throw;

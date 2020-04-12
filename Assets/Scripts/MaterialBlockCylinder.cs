@@ -11,21 +11,6 @@ public class MaterialBlockCylinder : MonoBehaviour
     // R = height, G = ambient, B = metallic, A = glossiness
     public Color _RadiusAndShading = new Color(0.07f, 0.7f, 0, 0);
 
-    public void Start()
-    {
-
-    }
-
-    private void OnValidate()
-    {
-        SetPropertyBlock();
-    }
-
-    public void Update()
-    {
-        SetPropertyBlock();
-    }
-
     public void SetColor(Color color)
     {
         _Albedo.r = color.r;

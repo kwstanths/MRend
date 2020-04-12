@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -10,19 +11,33 @@ public enum VisualizationMethod
 
 public class Atoms : MonoBehaviour
 {
+    private VisualizationMethod visualization_method_ = VisualizationMethod.BALL_AND_STICK;
     [SerializeField] GameObject prefab_atom = null;
     [SerializeField] GameObject prefab_bond = null;
 
-    /* */
+    /* Holds a list of all the spheres in the scene */
     List<ISphere> ispheres_ = new List<ISphere>();
     /* A dictionary that holds the type of the atom, and all the ISphere objects in the scene */
     private Dictionary<string, List<ISphere>> atoms_dictionary = new Dictionary<string, List<ISphere>>();
     /* A dictionary that holds the resiude id, and all the ISphere objects that form it */
     private Dictionary<int, List<ISphere>> residue_dictionary = new Dictionary<int, List<ISphere>>();
+    /* A list that holds the currently highlighted spehres */
+    private List<ISphere> highlighted_spheres_ = new List<ISphere>();
 
-    private ISphere previously_highlighted_atom = null;
+    private ISphere previously_highlighted_atom_ = null;
+    private ISphere selected_atom_ = null;
 
-    private VisualizationMethod visualization_method_ = VisualizationMethod.BALL_AND_STICK;
+    [SerializeField] GameObject prefab_arc_ = null;
+    ICylinder[] bonds_selected_ = new ICylinder[2];
+    int bonds_selected_id_ = 0;
+    GameObject arc_previous_ = null;
+
+    public enum STATE {
+        EXPLORING,
+        SELECTED_ATOM,
+    }
+    private STATE state = STATE.EXPLORING;
+
 
     // Start is called before the first frame update
     void Start()
@@ -31,6 +46,7 @@ public class Atoms : MonoBehaviour
         List<List<int>> connections;
         PDBParser.ParseAtomsAndConnections(@"Assets/MModels/1tes.pdb", out atoms, out connections);
         //PDBParser.ParseAtomsAndConnections(@"Assets/MModels/4f0h.pdb", out atoms, out connections);
+        //PDBParser.ParseAtomsAndConnections(@"Assets/MModels/1s5l.pdb", out atoms, out connections);
 
         foreach (Atom atom in atoms)
         {
@@ -58,18 +74,21 @@ public class Atoms : MonoBehaviour
             }
         }
 
+        int bonds = 0;
         if (visualization_method_ == VisualizationMethod.BALL_AND_STICK)
         {
             foreach (KeyValuePair<int, List<ISphere>> value in residue_dictionary)
             {
                 List<ISphere> resiude_atoms = value.Value;
-                foreach (ISphere a in resiude_atoms)
+                for(int ia = 0; ia<resiude_atoms.Count; ia++)
                 {
+                    ISphere a = resiude_atoms[ia];
                     Vector3 a_position = a.transform.position;
                     float a_covalent_radius = AtomicRadii.GetCovalentRadius(a.atom_.element_);
-                    foreach (ISphere b in resiude_atoms)
+                    for(int ib = 0; ib < resiude_atoms.Count; ib++)
                     {
-                        if (a == b) continue;
+                        if (!(ia > ib)) continue;
+                        ISphere b = resiude_atoms[ib];
 
                         Vector3 b_position = b.transform.position;
                         float b_covalent_radius = AtomicRadii.radii_covalent[b.atom_.element_];
@@ -77,6 +96,7 @@ public class Atoms : MonoBehaviour
                         float distance = Vector3.Distance(a_position, b_position);
                         if (distance <= a_covalent_radius + b_covalent_radius + 0.015)
                         {
+                            bonds++;
                             GameObject temp = Instantiate(prefab_bond, a_position, Quaternion.identity);
                             temp.transform.parent = transform;
 
@@ -85,13 +105,18 @@ public class Atoms : MonoBehaviour
                             temp.transform.rotation = toRotation;
 
                             ICylinder icylinder = temp.GetComponent<ICylinder>();
-                            icylinder.radius_ = 0.015f;
+                            icylinder.radius_ = AtomicRadii.ball_and_stick_bond_radius;
                             icylinder.height_ = distance;
                         }
                     }
                 }
             }
         }
+
+        bonds_selected_[0] = null;
+        bonds_selected_[1] = null;
+
+        Debug.Log("Spawned: " + bonds + " bonds");
     }
 
     public VisualizationMethod GetVisualizationMethod()
@@ -117,42 +142,138 @@ public class Atoms : MonoBehaviour
         residue_dictionary[resiude].Add(sphere);
     }
 
-    void OnGUI()
+    //void OnGUI()
+    //{
+        //GUI.Label(new Rect(0, 0, 100, 100), (1.0f / Time.smoothDeltaTime).ToString());
+    //}
+
+    //Update is called once per frame
+    void Update()
     {
-        GUI.Label(new Rect(0, 0, 100, 100), (1.0f / Time.smoothDeltaTime).ToString());
-    }
+        if (state == STATE.EXPLORING) {
+            RaycastHit hit;
+            /* 
+             * Perform ray casting towards the camera direction, move the ray origin slightly forward to avoid intersections with spheres that
+             * we are currently inside
+             */
+            bool ret = Physics.Raycast(Camera.main.transform.position + Camera.main.transform.forward * AtomicRadii.ball_and_stick_radius, Camera.main.transform.forward, out hit, 100.0f);
+            if (ret) {
+                ISphere isphere = hit.transform.GetComponent<ISphere>();
+                ICylinder icylinder = hit.transform.GetComponent<ICylinder>();
+                Debug.DrawRay(Camera.main.transform.position, Camera.main.transform.forward * hit.distance, Color.white);
 
-    // Update is called once per frame
-    void Update() {
-       
-        RaycastHit hit;
-        bool ret = Physics.Raycast(Camera.main.transform.position, Camera.main.transform.forward, out hit, 100.0f);
-        if (ret)
-        {
-            Debug.DrawRay(Camera.main.transform.position, Camera.main.transform.forward * hit.distance, Color.white);
+                if (isphere != null) {
+                    if (Input.GetKeyDown(KeyCode.C) == true) {
+                        SetColor(isphere);
+                    }
+                    if (Input.GetMouseButtonDown(0) == true) {
+                        selected_atom_ = isphere;
+                        state = STATE.SELECTED_ATOM;
+                        return;
+                    }
 
-            ISphere isphere = hit.transform.GetComponent<ISphere>();
+                    if (isphere != previously_highlighted_atom_) {
+                        HighLight(isphere);
+                    }
+                } else if (icylinder != null) {
+                    if (Input.GetMouseButtonDown(0) == true) {
+                        bonds_selected_[bonds_selected_id_ % 2] = icylinder;
+                        bonds_selected_id_++;
 
-            if (Input.GetKeyDown(KeyCode.C) == true)
-            {
-                SetColor(isphere);
+                        if (bonds_selected_[0] != null && bonds_selected_[1] != null &&  bonds_selected_[0] != bonds_selected_[1]) 
+                        {
+                            if (arc_previous_ != null) {
+                                Destroy(arc_previous_);
+                            }
+
+                            SpawnArc(bonds_selected_[0], bonds_selected_[1]);
+                            
+                        }
+                    }
+
+                }
+                
+
+
+            } else {
+                ClearHighlighted();
+                previously_highlighted_atom_ = null;
+                //Debug.DrawRay(Camera.main.transform.position, Camera.main.transform.forward * 1000, Color.white);
             }
 
-            if (isphere == previously_highlighted_atom) return;
-            HighLight(isphere);
-        }
-        else {
-            if (previously_highlighted_atom != null)
-            {
-                RemoveHighlightFromPrevious();
+        } else if (state == STATE.SELECTED_ATOM) {
+            if (Input.GetMouseButtonDown(1) == true) {
+                ClearHighlighted();
+                selected_atom_ = null;
+                state = STATE.EXPLORING;
+                return;
             }
-            //Debug.DrawRay(Camera.main.transform.position, Camera.main.transform.forward * 1000, Color.white);
+
+            ClearHighlighted();
+            Collider[] hitColliders = Physics.OverlapSphere(selected_atom_.transform.position, AtomicRadii.ball_and_stick_bond_radius * 10);
+            foreach (Collider c in hitColliders) {
+                ISphere s = c.gameObject.GetComponent<ISphere>();
+                if (s == null) continue;
+                s.SetHighlighted(true);
+                highlighted_spheres_.Add(s);
+            }
         }
+
+
+        
     }
+
+    private void SpawnArc(ICylinder a, ICylinder b) {
+        /* Spawn an arc between two cylinders 
+         * Calculate the origin and the direction by taking into consideration 
+         * all possible cylinder directions
+         */
+
+        Vector3 position1 = a.transform.position;
+        Vector3 position2 = b.transform.position;
+        Vector3 position3 = position1 + a.transform.up * a.height_; 
+        Vector3 position4 = position2 + b.transform.up * b.height_;
+
+        Vector3 arc_origin;
+        Vector3 arc_dir1;
+        Vector3 arc_dir2;
+        if (position1 == position2){
+            arc_origin = position1;
+            arc_dir1 = a.transform.up;
+            arc_dir2 = b.transform.up;
+        } else if (position1 == position4) {
+            arc_origin = position1;
+            arc_dir1 = a.transform.up;
+            arc_dir2 = -b.transform.up;
+        } else if (position2 == position3) {
+            arc_origin = position2;
+            arc_dir1 = b.transform.up;
+            arc_dir2 = -a.transform.up;
+        } else if (position4 == position3) {
+            arc_origin = position3;
+            arc_dir1 = -a.transform.up;
+            arc_dir2 = -b.transform.up;
+        } else {
+            /* The two vectors don't form an angle */
+            return;
+        }
+
+        arc_previous_ = Instantiate(prefab_arc_, arc_origin, Quaternion.identity);
+        ArcRenderer arc = arc_previous_.GetComponent<ArcRenderer>();
+        arc.X_ = arc_dir1;
+        arc.W_ = arc_dir2;
+        arc.Radius_ = (a.height_ + b.height_) / 4;
+    }
+
+    //public void OnDrawGizmos() {
+    //    if (state == STATE.SELECTED_ATOM) {
+    //        Gizmos.DrawWireSphere(selected_atom_.transform.position, AtomicRadii.ball_and_stick_bond_radius * 10);
+    //    }
+    //}
 
     private void SetColor(ISphere isphere)
     {
-        Color rcolor = new Color(Random.Range(0.0f, 1.0f), Random.Range(0.0f, 1.0f), Random.Range(0.0f, 1.0f));
+        Color rcolor = new Color(UnityEngine.Random.Range(0.0f, 1.0f), UnityEngine.Random.Range(0.0f, 1.0f), UnityEngine.Random.Range(0.0f, 1.0f));
         foreach (ISphere s in atoms_dictionary[isphere.atom_.element_])
         {
             s.SetColor(rcolor);
@@ -161,27 +282,28 @@ public class Atoms : MonoBehaviour
 
     private void HighLight(ISphere isphere)
     {
-        if (previously_highlighted_atom != null && previously_highlighted_atom.atom_.res_seq_ != isphere.atom_.res_seq_)
+        if (previously_highlighted_atom_ != null && previously_highlighted_atom_.atom_.res_seq_ != isphere.atom_.res_seq_)
         {
-            RemoveHighlightFromPrevious();
+            ClearHighlighted();
         }
 
         isphere.SetHighlighted(true);
+        highlighted_spheres_.Add(isphere);
         foreach (ISphere s in residue_dictionary[isphere.atom_.res_seq_])
         {
             s.SetHighlighted(true);
+            highlighted_spheres_.Add(s);
         }
-        previously_highlighted_atom = isphere;
+        previously_highlighted_atom_ = isphere;
     }
 
-    private void RemoveHighlightFromPrevious()
+    private void ClearHighlighted()
     {
-        previously_highlighted_atom.SetHighlighted(false);
-        foreach (ISphere s in residue_dictionary[previously_highlighted_atom.atom_.res_seq_])
+        foreach (ISphere s in highlighted_spheres_)
         {
             s.SetHighlighted(false);
         }
-        previously_highlighted_atom = null;
+        highlighted_spheres_.Clear();
     }
 
 }
