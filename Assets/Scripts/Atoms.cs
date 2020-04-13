@@ -259,6 +259,8 @@ public class Atoms : MonoBehaviour
         }
 
         arc_previous_ = Instantiate(prefab_arc_, arc_origin, Quaternion.identity);
+        arc_previous_.transform.parent = transform;
+
         ArcRenderer arc = arc_previous_.GetComponent<ArcRenderer>();
         arc.X_ = arc_dir1;
         arc.W_ = arc_dir2;

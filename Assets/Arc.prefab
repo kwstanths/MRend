@@ -241,7 +241,7 @@ TextMesh:
   m_OffsetZ: 0
   m_CharacterSize: 0.01
   m_LineSpacing: 1
-  m_Anchor: 5
+  m_Anchor: 4
   m_Alignment: 1
   m_TabSize: 4
   m_FontSize: 38
@@ -250,7 +250,7 @@ TextMesh:
   m_Font: {fileID: 10102, guid: 0000000000000000e000000000000000, type: 0}
   m_Color:
     serializedVersion: 2
-    rgba: 4291035391
+    rgba: 4294967040
 --- !u!114 &6552596903854402275
 MonoBehaviour:
   m_ObjectHideFlags: 0

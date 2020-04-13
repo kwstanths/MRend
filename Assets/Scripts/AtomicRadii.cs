@@ -31,7 +31,7 @@ public class AtomicRadii
         {"MN", 0.140f },
         {"FE", 0.140f },
 
-        /* Deuterium is not present in the atomic table, but some atoms in PDF files are of this type */
+        /* Deuterium is not present in the atomic table, but some atoms in PDB files are of this type */
         {"D",  2.1f * 0.000001f },
     };
 
