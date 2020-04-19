@@ -248,8 +248,80 @@ Shader "Custom/ImpostorSphere"
             }
             ENDCG
         }
-        
     }
+
+    //SubShader{
+    //    Tags { "Queue" = "Transparent" "RenderType" = "Transparent" "IgnoreProjector" = "True"}
+    //    ZWrite Off
+    //    Blend SrcAlpha OneMinusSrcAlpha
+
+    //    Pass {
+    //    /* Base forward rendering shader, executed when the rendering mode is set to forward, and with the directional light as input */
+    //    Tags { "LightMode" = "ForwardBase" }
+    //    CGPROGRAM
+
+    //    #pragma vertex vert  
+    //    #pragma fragment frag
+
+    //    #include "UnityCG.cginc"
+    //    #include "Lightning.cginc"
+    //    #include "Impostor.cginc"
+    //    #include "AutoLight.cginc"
+
+    //    #define BOX_CORRECTION 1.5
+
+    //    uniform float _Radius;
+    //    float4 _Albedo;
+    //    float _Ambient;
+    //    /* Provided by Unity */
+    //    uniform float4 _LightColor0;
+
+    //    struct appdata {
+    //       float4 vertex : POSITION;
+    //    };
+    //    struct v2f {
+    //       float4 pos : SV_POSITION;
+    //       float4 view_pos : TEXCOORD0;
+    //    };
+
+    //    v2f vert(appdata input)
+    //    {
+    //        /* Transform standard quad geometry to face the camera */
+    //        /* Multiply the width of the quad with the box correction */
+    //        /* Multiply with 2 sinxe the standard quad geometry goes from -0.5 to 0.5 and we want the standard sphere to have radius 1 */
+    //        v2f output;
+    //        output.view_pos = mul(UNITY_MATRIX_MV, float4(0.0, 0.0, 0.0, 1.0)) + BOX_CORRECTION * float4(input.vertex.x, input.vertex.y, 0.0, 0.0) * 2.0f * float4(_Radius, _Radius, 1.0, 1.0);
+    //        output.pos = mul(UNITY_MATRIX_P, output.view_pos);
+
+    //        return output;
+    //    }
+
+    //    float4 frag(v2f input, out float outDepth : SV_Depth) : COLOR
+    //    {
+    //        /* Compute real fragment world position and normal */
+    //        float3 normal_world, position_world;
+    //        ImpostorSphere(mul(UNITY_MATRIX_I_V, input.view_pos), _Radius, position_world, normal_world);
+
+    //        /* Calculate depth */
+    //        float4 clip = mul(UNITY_MATRIX_VP, float4(position_world, 1.0f));
+    //        float z_value = clip.z / clip.w;
+    //        outDepth = z_value;
+
+    //        float3 view_direction = normalize(position_world - _WorldSpaceCameraPos.xyz);
+
+    //        /* Phong shading */
+    //        DirectionalLight light;
+    //        light.direction = -_WorldSpaceLightPos0.xyz;
+    //        light.ambient_factor = _Ambient;
+    //        light.diffuse_color = _LightColor0;
+
+    //        float3 color = DirectionalLightColor(light, normal_world, view_direction, _Albedo);
+
+    //        return half4(color, 0.2);
+    //    }
+    //    ENDCG
+    //}
+    //}
 
     Fallback "Diffuse"
 }

@@ -5,12 +5,14 @@ using UnityEngine;
 
 public class MaterialBlockSphere : MonoBehaviour
 {
+    public static float SPHERE_AMBIENT = 0.7f;
+
     //The material property block we pass to the GPU
     private MaterialPropertyBlock property_block;
     //RGB = albedo, A = is highlighted or not
     public Color _Albedo = new Color(1.0f, 0, 0.8f, 0.0f);
     // R = radius, G = ambient component, B = metallicness, A = glossiness
-    public Color _RadiusAndShading = new Color(0.07f, 0.7f, 0, 0);
+    public Color _RadiusAndShading = new Color(0.07f, SPHERE_AMBIENT, 0, 0);
 
     public void Start()
     {
@@ -28,6 +30,8 @@ public class MaterialBlockSphere : MonoBehaviour
 
     public void SetHighlighted(bool is_highlighted)
     {
+        if ((is_highlighted && _Albedo.a > 0) || (!is_highlighted && _Albedo.a < 1)) return;
+
         _Albedo.a = (is_highlighted) ? 255 : 0;
         SetPropertyBlock();
     }

@@ -11,6 +11,8 @@ public enum VisualizationMethod
 
 public class Atoms : MonoBehaviour
 {
+    public static float SELECTION_MODE_SPHERE_RADIUS = AtomicRadii.ball_and_stick_radius * 4.5f;
+
     private VisualizationMethod visualization_method_ = VisualizationMethod.BALL_AND_STICK;
     [SerializeField] GameObject prefab_atom = null;
     [SerializeField] GameObject prefab_bond = null;
@@ -32,12 +34,16 @@ public class Atoms : MonoBehaviour
     int bonds_selected_id_ = 0;
     GameObject arc_previous_ = null;
 
+    [SerializeField] GameObject prefab_selection_plane = null;
+    GameObject selection_plane_previous = null;
+
     public enum STATE {
         EXPLORING,
         SELECTED_ATOM,
     }
     private STATE state = STATE.EXPLORING;
 
+    public float speed_object_move = 1;
 
     // Start is called before the first frame update
     void Start()
@@ -169,6 +175,22 @@ public class Atoms : MonoBehaviour
                     if (Input.GetMouseButtonDown(0) == true) {
                         selected_atom_ = isphere;
                         state = STATE.SELECTED_ATOM;
+
+                        if (selection_plane_previous != null) Destroy(selection_plane_previous);
+
+                        selection_plane_previous = Instantiate(prefab_selection_plane, selected_atom_.transform.position, Quaternion.identity);
+                        selection_plane_previous.transform.parent = transform;
+
+                        ClearHighlighted();
+                        Collider[] hitColliders = Physics.OverlapSphere(selected_atom_.transform.position, SELECTION_MODE_SPHERE_RADIUS);
+                        foreach (Collider c in hitColliders) {
+                            ISphere s = c.gameObject.GetComponent<ISphere>();
+                            if (s == null || s == selected_atom_) continue;
+
+                            SelectionPlane plane = selection_plane_previous.GetComponent<SelectionPlane>();
+                            plane.AddSphere(s);
+                        }
+
                         return;
                     }
 
@@ -209,18 +231,27 @@ public class Atoms : MonoBehaviour
                 return;
             }
 
-            ClearHighlighted();
-            Collider[] hitColliders = Physics.OverlapSphere(selected_atom_.transform.position, AtomicRadii.ball_and_stick_bond_radius * 10);
-            foreach (Collider c in hitColliders) {
-                ISphere s = c.gameObject.GetComponent<ISphere>();
-                if (s == null) continue;
-                s.SetHighlighted(true);
-                highlighted_spheres_.Add(s);
+            if (Input.GetKey(KeyCode.T)) {
+                MoveTowardsSelectedAtom(speed_object_move);
             }
+
+            if (Input.GetKey(KeyCode.Y)) {
+                MoveTowardsSelectedAtom(-speed_object_move);
+            }
+
         }
-
-
         
+    }
+
+    private void MoveTowardsSelectedAtom(float speed) {
+        /* Calculate desired position of the selected sphere, just in front of the camera */
+        Vector3 desired_position = Camera.main.transform.position + 2 * Camera.main.transform.forward * AtomicRadii.GetCovalentRadius(selected_atom_.atom_.element_);
+        /* Calculate the movement speed */
+        speed = speed * Vector3.Distance(selected_atom_.transform.position, desired_position);
+
+        /* Change position */
+        Vector3 movement_direction = Vector3.Normalize(selected_atom_.transform.position - desired_position);
+        transform.position = transform.position - speed * Time.deltaTime * movement_direction;
     }
 
     private void SpawnArc(ICylinder a, ICylinder b) {
