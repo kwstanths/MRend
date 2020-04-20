@@ -166,7 +166,7 @@ PrefabInstance:
     - target: {fileID: 8805392133184943683, guid: 95b76dc88f076d2459c688cd9d67499a,
         type: 3}
       propertyPath: m_IsActive
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8805392133184943695, guid: 95b76dc88f076d2459c688cd9d67499a,
         type: 3}
@@ -544,7 +544,7 @@ MonoBehaviour:
     type: 3}
   prefab_arc_: {fileID: 7382895729098438983, guid: d874e9b2e00e5374198245ac5ecaaed4,
     type: 3}
-  prefab_selection_plane: {fileID: 1351859565674314254, guid: c257816c24925c240af84b6de269287a,
+  prefab_selection_plane: {fileID: 8805392133184943683, guid: c08d248c3210c094c82644a9ea2b1655,
     type: 3}
   speed_object_move: 1.2
 --- !u!4 &1027972737

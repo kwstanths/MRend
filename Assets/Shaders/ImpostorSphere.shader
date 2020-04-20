@@ -6,7 +6,6 @@ Shader "Custom/ImpostorSphere"
     Properties{
         [Header(Forward rendering)]
         _Radius("_Radius", Float) = 1.0
-        _Ambient("Ambient", Float) = 0.2
         _Shininess("Shininess", Range(0, 128)) = 32
         _SpecularIntensity("Specular intensity", Range(0, 1)) = 0.2
 
@@ -16,11 +15,15 @@ Shader "Custom/ImpostorSphere"
     }
 
     SubShader {
-        Tags { "Queue" = "Geometry" "RenderType" = "Opaque" }
+        Tags { "Queue" = "Geometry" }
 
         Pass {
             /* Base forward rendering shader, executed when the rendering mode is set to forward, and with the directional light as input */
             Tags { "LightMode" = "ForwardBase" }
+            
+            Blend SrcAlpha OneMinusSrcAlpha
+            ZWrite Off
+
             CGPROGRAM
     
             #pragma vertex vert  
@@ -33,9 +36,6 @@ Shader "Custom/ImpostorSphere"
     
             #define BOX_CORRECTION 1.5
 
-            uniform float _Radius;
-            float4 _Albedo;
-            float _Ambient;
             /* Provided by Unity */
             uniform float4 _LightColor0;
     
@@ -47,13 +47,21 @@ Shader "Custom/ImpostorSphere"
                float4 view_pos : TEXCOORD0;
             };
 
+            /* Unpack extra instance properties */
+            UNITY_INSTANCING_BUFFER_START(Props)
+                UNITY_DEFINE_INSTANCED_PROP(float4, _Albedo)
+                UNITY_DEFINE_INSTANCED_PROP(float4, _RadiusAndShading)
+            UNITY_INSTANCING_BUFFER_END(Props)
+
             v2f vert(appdata input)
             {
+                float radius = UNITY_ACCESS_INSTANCED_PROP(Props, _RadiusAndShading);
+
                 /* Transform standard quad geometry to face the camera */
                 /* Multiply the width of the quad with the box correction */
                 /* Multiply with 2 sinxe the standard quad geometry goes from -0.5 to 0.5 and we want the standard sphere to have radius 1 */
                 v2f output;
-                output.view_pos = mul(UNITY_MATRIX_MV, float4(0.0, 0.0, 0.0, 1.0)) + BOX_CORRECTION * float4(input.vertex.x, input.vertex.y, 0.0, 0.0) * 2.0f * float4(_Radius, _Radius, 1.0, 1.0);
+                output.view_pos = mul(UNITY_MATRIX_MV, float4(0.0, 0.0, 0.0, 1.0)) + BOX_CORRECTION * float4(input.vertex.x, input.vertex.y, 0.0, 0.0) * 2.0f * float4(radius, radius, 1.0, 1.0);
                 output.pos = mul(UNITY_MATRIX_P, output.view_pos);
     
                 return output;
@@ -61,9 +69,13 @@ Shader "Custom/ImpostorSphere"
     
             float4 frag(v2f input, out float outDepth : SV_Depth) : COLOR
             {
+                float4 radius_and_shading = UNITY_ACCESS_INSTANCED_PROP(Props, _RadiusAndShading);
+                float radius = radius_and_shading.r;
+                float ambient_factor = radius_and_shading.g;
+
                 /* Compute real fragment world position and normal */
                 float3 normal_world, position_world;
-                ImpostorSphere(mul(UNITY_MATRIX_I_V, input.view_pos), _Radius, position_world, normal_world);
+                ImpostorSphere(mul(UNITY_MATRIX_I_V, input.view_pos), radius, position_world, normal_world);
                 
                 /* Calculate depth */
                 float4 clip = mul(UNITY_MATRIX_VP, float4(position_world, 1.0f));
@@ -75,12 +87,14 @@ Shader "Custom/ImpostorSphere"
                 /* Phong shading */
                 DirectionalLight light;
                 light.direction = -_WorldSpaceLightPos0.xyz;
-                light.ambient_factor = _Ambient;
+                light.ambient_factor = ambient_factor;
                 light.diffuse_color = _LightColor0;
 
-                float3 color = DirectionalLightColor(light, normal_world, view_direction, _Albedo);
+                float4 albedo = UNITY_ACCESS_INSTANCED_PROP(Props, _Albedo);
+
+                float3 color = DirectionalLightColor(light, normal_world, view_direction, albedo.xyz);
                 
-                return half4(color, 1);
+                return half4(color, 0.2);
             }
             ENDCG
         }
@@ -97,12 +111,10 @@ Shader "Custom/ImpostorSphere"
 
             #include "Lightning.cginc"
             #include "Impostor.cginc"
+            #include "UnityCG.cginc"
 
             #define BOX_CORRECTION 1.5
 
-            uniform float _Radius;
-            float4 _Albedo;
-            float _Ambient;
             /* Provided by Unity */
             uniform float4 _LightColor0;
 
@@ -114,10 +126,17 @@ Shader "Custom/ImpostorSphere"
                float4 view_pos : TEXCOORD0;
             };
 
+            UNITY_INSTANCING_BUFFER_START(Props)
+                UNITY_DEFINE_INSTANCED_PROP(float4, _Albedo)
+                UNITY_DEFINE_INSTANCED_PROP(float4, _RadiusAndShading)
+                UNITY_INSTANCING_BUFFER_END(Props)
+
             v2f vert(appdata input)
             {
+               float radius = UNITY_ACCESS_INSTANCED_PROP(Props, _RadiusAndShading);
+
                v2f output;
-               output.view_pos = mul(UNITY_MATRIX_MV, float4(0.0, 0.0, 0.0, 1.0)) + BOX_CORRECTION * float4(input.vertex.x, input.vertex.y, 0.0, 0.0) * 2.0f * float4(_Radius, _Radius, 1.0, 1.0);
+               output.view_pos = mul(UNITY_MATRIX_MV, float4(0.0, 0.0, 0.0, 1.0)) + BOX_CORRECTION * float4(input.vertex.x, input.vertex.y, 0.0, 0.0) * 2.0f * float4(radius, radius, 1.0, 1.0);
                output.pos = mul(UNITY_MATRIX_P, output.view_pos);
 
                return output;
@@ -125,8 +144,12 @@ Shader "Custom/ImpostorSphere"
 
             float4 frag(v2f input, out float outDepth : SV_Depth) : COLOR
             {
+                float4 radius_and_shading = UNITY_ACCESS_INSTANCED_PROP(Props, _RadiusAndShading);
+                float radius = radius_and_shading.r;
+                float ambient_factor = radius_and_shading.g;
+
                 float3 normal_world, position_world;
-                ImpostorSphere(mul(UNITY_MATRIX_I_V, input.view_pos), _Radius, position_world, normal_world);
+                ImpostorSphere(mul(UNITY_MATRIX_I_V, input.view_pos), radius, position_world, normal_world);
 
                 float4 clip = mul(UNITY_MATRIX_VP, float4(position_world, 1.0f));
                 float z_value = clip.z / clip.w;
@@ -136,12 +159,14 @@ Shader "Custom/ImpostorSphere"
 
                 PointLight light;
                 light.position = _WorldSpaceLightPos0.xyz;
-                light.ambient_factor = _Ambient;
+                light.ambient_factor = ambient_factor;
                 light.diffuse_color = _LightColor0;
 
-                float3 color = PointLightColor(light, position_world, normal_world, view_direction, _Albedo);
+                float4 albedo = UNITY_ACCESS_INSTANCED_PROP(Props, _Albedo);
 
-                return half4(color, 1);
+                float3 color = PointLightColor(light, position_world, normal_world, view_direction, albedo.xyz);
+
+                return half4(color, 0.2);
             }
             ENDCG
         }

@@ -5,19 +5,15 @@ using UnityEngine;
 
 public class MaterialBlockSphere : MonoBehaviour
 {
+    /* The default ambient component of the sphere */
     public static float SPHERE_AMBIENT = 0.7f;
 
-    //The material property block we pass to the GPU
+    /* The material property block we pass to the renderer */
     private MaterialPropertyBlock property_block;
-    //RGB = albedo, A = is highlighted or not
+    /* Property 1: RGB = albedo, A = is highlighted or not */
     public Color _Albedo = new Color(1.0f, 0, 0.8f, 0.0f);
-    // R = radius, G = ambient component, B = metallicness, A = glossiness
+    /* Property 2: R = radius, G = ambient component, B = metallicness, A = glossiness */
     public Color _RadiusAndShading = new Color(0.07f, SPHERE_AMBIENT, 0, 0);
-
-    public void Start()
-    {
-
-    }
 
     public void SetColor(Color color)
     {
@@ -30,6 +26,7 @@ public class MaterialBlockSphere : MonoBehaviour
 
     public void SetHighlighted(bool is_highlighted)
     {
+        /* If it's the same then return */
         if ((is_highlighted && _Albedo.a > 0) || (!is_highlighted && _Albedo.a < 1)) return;
 
         _Albedo.a = (is_highlighted) ? 255 : 0;
@@ -60,19 +57,19 @@ public class MaterialBlockSphere : MonoBehaviour
         SetPropertyBlock();
     }
 
-    public void SetPropertyBlock()
+    private void SetPropertyBlock()
     {
         if (property_block == null)
         {
             property_block = new MaterialPropertyBlock();
         }
 
-        //Get a renderer component either of the own gameobject or of a child
+        /* Get the renderer component either of the own gameobject or of a child */
         Renderer renderer = GetComponentInChildren<Renderer>();
-        //set the color property
+        /* Set the color properties */
         property_block.SetColor("_Albedo", _Albedo);
         property_block.SetColor("_RadiusAndShading", _RadiusAndShading);
-        //apply propertyBlock to renderer
+        /* Set to the renderer */
         renderer.SetPropertyBlock(property_block);
     }
 

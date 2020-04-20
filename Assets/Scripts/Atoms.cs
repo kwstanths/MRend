@@ -180,6 +180,7 @@ public class Atoms : MonoBehaviour
 
                         selection_plane_previous = Instantiate(prefab_selection_plane, selected_atom_.transform.position, Quaternion.identity);
                         selection_plane_previous.transform.parent = transform;
+                        SelectionPlane plane = selection_plane_previous.GetComponent<SelectionPlane>();
 
                         ClearHighlighted();
                         Collider[] hitColliders = Physics.OverlapSphere(selected_atom_.transform.position, SELECTION_MODE_SPHERE_RADIUS);
@@ -187,7 +188,6 @@ public class Atoms : MonoBehaviour
                             ISphere s = c.gameObject.GetComponent<ISphere>();
                             if (s == null || s == selected_atom_) continue;
 
-                            SelectionPlane plane = selection_plane_previous.GetComponent<SelectionPlane>();
                             plane.AddSphere(s);
                         }
 
@@ -224,7 +224,7 @@ public class Atoms : MonoBehaviour
             }
 
         } else if (state == STATE.SELECTED_ATOM) {
-            if (Input.GetMouseButtonDown(1) == true) {
+            if (Input.GetKeyDown(KeyCode.Escape) == true) {
                 ClearHighlighted();
                 selected_atom_ = null;
                 state = STATE.EXPLORING;

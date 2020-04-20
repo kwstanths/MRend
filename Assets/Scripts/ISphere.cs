@@ -3,25 +3,22 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
 
+/* 
+ * A script attached on an impostor sphere that holds the atom information, radius, color, etc.
+ */
 public class ISphere : MonoBehaviour
 {
+    /* Holds the atom information associated with this impostor sphere */
     public Atom atom_;
+    /* A list of spheres mentioned as connections in the PDB file */
     public List<ISphere> connections_ = new List<ISphere>();
 
+    /* A reference to the material property block of that impostor sphere */
     private MaterialBlockSphere material_block_;
-
-    private void Awake()
-    {
-    }
 
     private void Start()
     {
-        //RenderQueue queue = RenderQueue.Geometry;
-
-        //Material m = GetComponent<MeshRenderer>().material;
-        //m.renderQueue = (int)queue;
-        //m.SetOverrideTag("RenderType", "Opaque");
-
+        /* Init material property block, color and radius */
         material_block_ = GetComponent<MaterialBlockSphere>();
         SetCPKColor();
 
@@ -48,7 +45,8 @@ public class ISphere : MonoBehaviour
     {
         /* Set sphere collider radius for ray casting */
         float scaling = transform.localScale.x;
-        GetComponent<SphereCollider>().radius = radius / scaling;
+        SphereCollider collider = GetComponent<SphereCollider>();
+        if (collider != null) collider.radius = radius / scaling;
 
         /* Set material radius */
         material_block_.SetRadius(radius);
@@ -68,7 +66,7 @@ public class ISphere : MonoBehaviour
         }
         catch
         {
-            
+            return;
         }
     }
     
@@ -77,6 +75,17 @@ public class ISphere : MonoBehaviour
         if (atom_ == null) return;
 
         SetColor(CPKColors.GetCPKColor(atom_.element_));
+    }
+
+    public void SetTransparent(bool transparent) {
+        /* Set the rendering queue to either transparent or opaque geometry */
+        RenderQueue queue;
+        if (transparent) queue = RenderQueue.Transparent;
+        else queue = RenderQueue.Geometry;
+
+        /* This is going to break instancing for that sphere */
+        Material m = GetComponent<MeshRenderer>().material;
+        m.renderQueue = (int)queue;
     }
 
 }

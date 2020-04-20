@@ -4,11 +4,11 @@ using UnityEngine;
 
 public class MaterialBlockCylinder : MonoBehaviour
 {
-    //The material property block we pass to the GPU
+    /* The material property block we pass to the renderer */
     private MaterialPropertyBlock property_block;
-    //RGB = albedo, A = radius
+    /* Property 1: RGB = albedo, A = radius */
     public Color _Albedo = new Color(0.5f, 0, 0, 0.015f);
-    // R = height, G = ambient, B = metallic, A = glossiness
+    /* Property 2: R = height, G = ambient, B = metallic, A = glossiness */
     public Color _RadiusAndShading = new Color(0.07f, 0.7f, 0, 0);
 
     public void SetColor(Color color)
@@ -57,12 +57,12 @@ public class MaterialBlockCylinder : MonoBehaviour
             property_block = new MaterialPropertyBlock();
         }
 
-        //Get a renderer component either of the own gameobject or of a child
+        /* Get the renderer component either of the own gameobject or of a child */
         Renderer renderer = GetComponentInChildren<Renderer>();
-        //set the color property
+        /* Set the color properties */
         property_block.SetColor("_Albedo", _Albedo);
         property_block.SetColor("_RadiusAndShading", _RadiusAndShading);
-        //apply propertyBlock to renderer
+        /* Set to the renderer */
         renderer.SetPropertyBlock(property_block);
     }
 }
