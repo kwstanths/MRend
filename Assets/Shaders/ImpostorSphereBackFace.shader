@@ -1,7 +1,4 @@
-﻿// Upgrade NOTE: upgraded instancing buffer 'Props' to new syntax.
-
-
-Shader "Custom/ImpostorSphere"
+﻿Shader "Custom/ImpostorSphereBackFace"
 {
     Properties{
         [Header(Forward rendering)]
@@ -75,7 +72,7 @@ Shader "Custom/ImpostorSphere"
 
                 /* Compute real fragment world position and normal */
                 float3 normal_world, position_world;
-                ImpostorSphere(mul(UNITY_MATRIX_I_V, input.view_pos), radius, position_world, normal_world);
+                ImpostorSphere(mul(UNITY_MATRIX_I_V, input.view_pos), radius, position_world, normal_world, true);
                 
                 /* Calculate depth */
                 float4 clip = mul(UNITY_MATRIX_VP, float4(position_world, 1.0f));
@@ -149,7 +146,7 @@ Shader "Custom/ImpostorSphere"
                 float ambient_factor = radius_and_shading.g;
 
                 float3 normal_world, position_world;
-                ImpostorSphere(mul(UNITY_MATRIX_I_V, input.view_pos), radius, position_world, normal_world);
+                ImpostorSphere(mul(UNITY_MATRIX_I_V, input.view_pos), radius, position_world, normal_world, true);
 
                 float4 clip = mul(UNITY_MATRIX_VP, float4(position_world, 1.0f));
                 float z_value = clip.z / clip.w;
@@ -246,7 +243,7 @@ Shader "Custom/ImpostorSphere"
 
                 /* Compute real fragment world position and normal */
                 float3 normal_world, position_world;
-                ImpostorSphere(mul(UNITY_MATRIX_I_V, input.view_pos), radius, position_world, normal_world);
+                ImpostorSphere(mul(UNITY_MATRIX_I_V, input.view_pos), radius, position_world, normal_world, true);
 
                 /* Calculate depth */
                 float4 clip = mul(UNITY_MATRIX_VP, float4(position_world, 1.0f));

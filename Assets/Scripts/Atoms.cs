@@ -228,6 +228,7 @@ public class Atoms : MonoBehaviour
                 ClearHighlighted();
                 selected_atom_ = null;
                 state = STATE.EXPLORING;
+                Destroy(selection_plane_previous);
                 return;
             }
 
@@ -278,8 +279,8 @@ public class Atoms : MonoBehaviour
             arc_dir2 = -b.transform.up;
         } else if (position2 == position3) {
             arc_origin = position2;
-            arc_dir1 = b.transform.up;
-            arc_dir2 = -a.transform.up;
+            arc_dir1 = -a.transform.up;
+            arc_dir2 = b.transform.up;
         } else if (position4 == position3) {
             arc_origin = position3;
             arc_dir1 = -a.transform.up;

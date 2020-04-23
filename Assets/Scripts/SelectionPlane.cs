@@ -6,8 +6,17 @@ using UnityEngine;
 /* A script attached to an impsotor sphere that will implement a selection plane around this sphere */
 public class SelectionPlane : MonoBehaviour
 {
-    /* Holds the transform matrix for the coordinate system defined by the position of this object
-     * and the camera forward, right and up vectors
+    [SerializeField] GameObject prefab_arrow_top;
+    [SerializeField] GameObject prefab_arrow_top_right;
+    [SerializeField] GameObject prefab_arrow_right;
+    [SerializeField] GameObject prefab_arrow_bottom_right;
+    [SerializeField] GameObject prefab_arrow_bottom;
+    [SerializeField] GameObject prefab_arrow_bottom_left;
+    [SerializeField] GameObject prefab_arrow_left;
+    [SerializeField] GameObject prefab_arrow_top_left;
+
+    /* Holds the transform matrix for the local coordinate system of this selection plane. 
+     * For more information look at function CalculateInverseTransform()
      */
     Matrix4x4 ITM_;
 
@@ -20,9 +29,21 @@ public class SelectionPlane : MonoBehaviour
      * will be used to store the closest selection
      */
     int[,] array_;
+    Color[,] colors_;
+    GameObject[,] arrows_;
 
     float drag_x_ = 0;
     float drag_y_ = 0;
+
+
+    Color color_top = new Color(1, 0, 0);
+    Color color_top_right = new Color(0.74f, 0.85f, 0.28f);
+    Color color_right = new Color(0, 0.58f, 0.85f);
+    Color color_bottom_right = new Color(1, 1, 0);
+    Color color_bottom = new Color(0.52f, 0.27f, 0.6f);
+    Color color_bottom_left = new Color(0.27f, 0.72f, 0.56f);
+    Color color_left = new Color(0.96f, 0.56f, 0.12f);
+    Color color_top_left = new Color(0, 0, 1);
 
     void Start()
     {
@@ -34,6 +55,26 @@ public class SelectionPlane : MonoBehaviour
         s.SetTransparent(true);
         s.SetRadius(Atoms.SELECTION_MODE_SPHERE_RADIUS);
         s.SetColor(new Color(0.1f, 0.1f, 0.1f, 0));
+
+        colors_ = new Color[3, 3];
+        colors_[0, 0] = color_bottom_left;
+        colors_[0, 1] = color_bottom;
+        colors_[0, 2] = color_bottom_right;
+        colors_[1, 0] = color_left;
+        colors_[1, 2] = color_right;
+        colors_[2, 0] = color_top_left;
+        colors_[2, 1] = color_top;
+        colors_[2, 2] = color_top_right;
+
+        arrows_ = new GameObject[3, 3];
+        arrows_[0, 0] = Instantiate(prefab_arrow_bottom_left, new Vector3(0, 0, 0), Quaternion.identity);
+        arrows_[0, 1] = Instantiate(prefab_arrow_bottom, new Vector3(0, 0, 0), Quaternion.identity);
+        arrows_[0, 2] = Instantiate(prefab_arrow_bottom_right, new Vector3(0, 0, 0), Quaternion.identity);
+        arrows_[1, 0] = Instantiate(prefab_arrow_left, new Vector3(0, 0, 0), Quaternion.identity);
+        arrows_[1, 2] = Instantiate(prefab_arrow_right, new Vector3(0, 0, 0), Quaternion.identity);
+        arrows_[2, 0] = Instantiate(prefab_arrow_top_left, new Vector3(0, 0, 0), Quaternion.identity);
+        arrows_[2, 1] = Instantiate(prefab_arrow_top, new Vector3(0, 0, 0), Quaternion.identity);
+        arrows_[2, 2] = Instantiate(prefab_arrow_top_right, new Vector3(0, 0, 0), Quaternion.identity);
     }
 
     void Update() {
@@ -41,7 +82,8 @@ public class SelectionPlane : MonoBehaviour
 
         /* Calculate positions and reset colors and highlighting */
         plane_positions_ = new List<Vector3>(spheres_.Count);
-        foreach (ISphere s in spheres_) {
+        for (int i = 0; i < spheres_.Count; i++) {
+            ISphere s = spheres_[i];
             Vector4 sphere_world_position = new Vector4(s.transform.position.x, s.transform.position.y, s.transform.position.z, 1);
             Vector4 sphere_plane_position = ITM_ * sphere_world_position;
             plane_positions_.Add(sphere_plane_position);
@@ -57,6 +99,13 @@ public class SelectionPlane : MonoBehaviour
                 int s = array_[i, j];
                 if (s == -1) continue;
                 spheres_[s].SetHighlighted(true);
+                spheres_[s].SetColor(colors_[j, i]);
+
+                arrows_[j, i].SetActive(true);
+                arrows_[j, i].transform.position = spheres_[s].transform.position +
+                    Vector3.Normalize(Camera.main.transform.position - spheres_[s].transform.position) * 2.0f * AtomicRadii.ball_and_stick_radius;
+
+                arrows_[j, i].transform.rotation = Quaternion.LookRotation(arrows_[j, i].transform.position - Camera.main.transform.position);
             }
         }
 
@@ -78,9 +127,10 @@ public class SelectionPlane : MonoBehaviour
     private void MoveSelectionToSphere(ISphere s) {
         /* Set new position */
         transform.position = s.transform.position;
+        s.SetCPKColor();
 
         /* Clear spheres */
-        ClearHighlighted();
+        ClearHighlightedAndSetCPKColor();
         spheres_.Clear();
 
         /* Get the new spheres within radius */
@@ -130,6 +180,9 @@ public class SelectionPlane : MonoBehaviour
         for (int i = 0; i < 3; i++) {
             for (int j = 0; j < 3; j++) {
                 array_[i, j] = -1;
+                if (i != 1 || j != 1) {
+                    arrows_[i, j].SetActive(false);
+                }
             }
         }
 
@@ -147,38 +200,32 @@ public class SelectionPlane : MonoBehaviour
     }
 
     /* Given a angle in radians (-pi, pi] find the array index */
-    private static void GetArrayIndex(out int i, out int j, float local_xy_angle) {
+    private void GetArrayIndex(out int i, out int j, float local_xy_angle) {
         if (local_xy_angle >= -0.5234 && local_xy_angle < 0.5234) {
             /* Right */
             i = 2;
             j = 1;
-        }
-        else if (local_xy_angle > 0.523 && local_xy_angle < 1.0467) {
+        } else if (local_xy_angle > 0.523 && local_xy_angle < 1.0467) {
             /* Up right */
             i = 2;
             j = 2;
-        }
-        else if (local_xy_angle >= 1.046 && local_xy_angle < 2.0934) {
+        } else if (local_xy_angle >= 1.046 && local_xy_angle < 2.0934) {
             /* Up */
             i = 1;
             j = 2;
-        }
-        else if (local_xy_angle >= 2.093 && local_xy_angle < 2.6167) {
+        } else if (local_xy_angle >= 2.093 && local_xy_angle < 2.6167) {
             /* Up left */
             i = 0;
             j = 2;
-        }
-        else if (local_xy_angle >= 2.616 || local_xy_angle < -2.616) {
+        } else if (local_xy_angle >= 2.616 || local_xy_angle < -2.616) {
             /* Left */
             i = 0;
             j = 1;
-        }
-        else if (local_xy_angle >= -2.6167 && local_xy_angle < -2.093) {
+        } else if (local_xy_angle >= -2.6167 && local_xy_angle < -2.093) {
             /* Bottom left */
             i = 0;
             j = 0;
-        }
-        else if (local_xy_angle >= -2.0934 && local_xy_angle < -1.046) {
+        } else if (local_xy_angle >= -2.0934 && local_xy_angle < -1.046) {
             /* Bottom */
             i = 1;
             j = 0;
@@ -186,8 +233,7 @@ public class SelectionPlane : MonoBehaviour
             /* Bottom right */
             i = 2;
             j = 0;
-        }
-        else {
+        } else {
             i = 1;
             j = 1;
             print("FATAL ERROR");
@@ -195,12 +241,13 @@ public class SelectionPlane : MonoBehaviour
     }
 
     private void OnDestroy() {
-        ClearHighlighted();
+        ClearHighlightedAndSetCPKColor();
     }
 
-    private void ClearHighlighted() {
+    private void ClearHighlightedAndSetCPKColor() {
         foreach (ISphere s in spheres_) {
             s.SetHighlighted(false);
+            s.SetCPKColor();
         }
     }
 
@@ -209,10 +256,12 @@ public class SelectionPlane : MonoBehaviour
     }
 
     private void CalculateInverseTransform() {
+        /* New origin, X, Y, Z directions */
         Vector3 O = transform.position;
-        Vector3 X = Camera.main.transform.right;
+        Vector3 Z = Vector3.Normalize(transform.position - Camera.main.transform.position);
         Vector3 Y = Camera.main.transform.up;
-        Vector3 Z = Camera.main.transform.forward;
+        /* Unity is a left handed coordiante system */
+        Vector3 X = -Vector3.Cross(Z, Y);
 
         Matrix4x4 temp = new Matrix4x4();
         temp.SetColumn(0, new Vector4(X.x, X.y, X.z, 0));

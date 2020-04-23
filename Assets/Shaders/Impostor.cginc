@@ -1,7 +1,7 @@
 #ifndef __Impostor_cginc__
 #define __Impostor_cginc__
 
-void ImpostorSphere(float3 fragment_position_worldspace, float sphere_radius, inout float3 position_worldspace, inout float3 normal_worldspace) {
+void ImpostorSphere(float3 fragment_position_worldspace, float sphere_radius, inout float3 position_worldspace, inout float3 normal_worldspace, bool back_face = false) {
 
     float3 fragment_pos = fragment_position_worldspace;
     /* World space position of the center of the sphere, object space (0,0,0) */
@@ -29,7 +29,9 @@ void ImpostorSphere(float3 fragment_position_worldspace, float sphere_radius, in
     float t1 = (0.5f) * (-b + delta) / a;
     float t2 = (0.5f) * (-b - delta) / a;
     /* Get the closest point */
-    float t = min(t1, t2);
+    float t;
+    if (!back_face) t = min(t1, t2);
+    else t = max(t1, t2);
 
     position_worldspace = A + B * t;
     normal_worldspace = normalize(position_worldspace - sphere_center);
