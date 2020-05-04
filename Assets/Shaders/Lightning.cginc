@@ -1,8 +1,9 @@
 #ifndef __Lightning_cginc__
 #define __Lightning_cginc__
 
-float _Shininess;
-float _SpecularIntensity;
+/* Phong shading parameters used in forward rendering */
+static float _Shininess = 32;
+static float _SpecularIntensity = 0.2f;
 
 struct DirectionalLight {
     float3 direction;

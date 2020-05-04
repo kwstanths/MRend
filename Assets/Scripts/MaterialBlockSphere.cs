@@ -24,12 +24,12 @@ public class MaterialBlockSphere : MonoBehaviour
         SetPropertyBlock();
     }
 
-    public void SetHighlighted(bool is_highlighted)
+    public void SetHighlighted(float is_highlighted)
     {
         /* If it's the same then return */
-        if ((is_highlighted && _Albedo.a > 0) || (!is_highlighted && _Albedo.a < 1)) return;
+        //if (is_highlighted !=_Albedo.a) return;
 
-        _Albedo.a = (is_highlighted) ? 255 : 0;
+        _Albedo.a = is_highlighted;
         SetPropertyBlock();
     }
 

@@ -46,7 +46,7 @@ public class CPKColors
         try {
             return colors[element];
         }
-        catch (System.Exception e) {
+        catch (System.Exception) {
             return color_other;
         }
     }

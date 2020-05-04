@@ -53,7 +53,7 @@ public class AtomicRadii
         {
             return radii_covalent[element];
         }
-        catch (System.Exception e)
+        catch (System.Exception)
         {
             Debug.Log("Can't find covalent radius for element: " + element);
             throw;

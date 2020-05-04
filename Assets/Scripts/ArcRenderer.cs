@@ -39,6 +39,9 @@ public class ArcRenderer : MonoBehaviour
 
         local_to_world_ = transform.localToWorldMatrix;
 
+        X_ = Vector3.Normalize(X_);
+        W_ = Vector3.Normalize(W_);
+
         /* Calculate and set the arc points */
         Vector3[] points = CalculateArc();
         lr_.positionCount = resolution_ + 1;
@@ -79,7 +82,6 @@ public class ArcRenderer : MonoBehaviour
         local_points_ = new Vector3[resolution_ + 1];
         Vector3[] world_points = new Vector3[resolution_ + 1];
 
-        X_ = Vector3.Normalize(X_);
         Vector3 Z_ = Vector3.Cross(X_, W_);
         Vector3 Y_ = Vector3.Cross(Z_, X_);
 

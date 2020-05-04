@@ -11,7 +11,7 @@ public enum VisualizationMethod
 
 public class Atoms : MonoBehaviour
 {
-    public static float SELECTION_MODE_SPHERE_RADIUS = AtomicRadii.ball_and_stick_radius * 4.5f;
+    public static float SELECTION_MODE_SPHERE_RADIUS;
 
     private VisualizationMethod visualization_method_ = VisualizationMethod.BALL_AND_STICK;
     [SerializeField] GameObject prefab_atom = null;
@@ -26,26 +26,34 @@ public class Atoms : MonoBehaviour
     /* A list that holds the currently highlighted spehres */
     private List<ISphere> highlighted_spheres_ = new List<ISphere>();
 
+    public enum STATE
+    {
+        EXPLORING,
+        SELECTED_ATOM,
+        TORSION_ANGLE,
+    }
+    private STATE state = STATE.EXPLORING;
+
+    /* Exploring mode paramters */
     private ISphere previously_highlighted_atom_ = null;
     private ISphere selected_atom_ = null;
-
+    /* Arc parameters */
     [SerializeField] GameObject prefab_arc_ = null;
     ICylinder[] bonds_selected_ = new ICylinder[2];
     int bonds_selected_id_ = 0;
     GameObject arc_previous_ = null;
+    
+    /* Selected atom paramters */
+    [SerializeField] GameObject prefab_selection_plane_ = null;
+    GameObject selection_plane_previous_ = null;
 
-    [SerializeField] GameObject prefab_selection_plane = null;
-    GameObject selection_plane_previous = null;
-
-    public enum STATE {
-        EXPLORING,
-        SELECTED_ATOM,
-    }
-    private STATE state = STATE.EXPLORING;
+    /* Torsion angle paramters */
+    ISphere[] atoms_selected_ = new ISphere[4];
+    int atom_selected_id_ = 0;
+    [SerializeField] GameObject prefab_torsion_angle = null;
 
     public float speed_object_move = 1;
 
-    // Start is called before the first frame update
     void Start()
     {
         List<Atom> atoms;
@@ -80,47 +88,47 @@ public class Atoms : MonoBehaviour
             }
         }
 
+        Transform bonds_transform = transform.GetChild(0);
         int bonds = 0;
-        if (visualization_method_ == VisualizationMethod.BALL_AND_STICK)
+        foreach (KeyValuePair<int, List<ISphere>> value in residue_dictionary)
         {
-            foreach (KeyValuePair<int, List<ISphere>> value in residue_dictionary)
+            List<ISphere> resiude_atoms = value.Value;
+            for(int ia = 0; ia<resiude_atoms.Count; ia++)
             {
-                List<ISphere> resiude_atoms = value.Value;
-                for(int ia = 0; ia<resiude_atoms.Count; ia++)
+                ISphere a = resiude_atoms[ia];
+                Vector3 a_position = a.transform.position;
+                float a_covalent_radius = AtomicRadii.GetCovalentRadius(a.atom_.element_);
+                for(int ib = 0; ib < resiude_atoms.Count; ib++)
                 {
-                    ISphere a = resiude_atoms[ia];
-                    Vector3 a_position = a.transform.position;
-                    float a_covalent_radius = AtomicRadii.GetCovalentRadius(a.atom_.element_);
-                    for(int ib = 0; ib < resiude_atoms.Count; ib++)
+                    if (!(ia > ib)) continue;
+                    ISphere b = resiude_atoms[ib];
+
+                    Vector3 b_position = b.transform.position;
+                    float b_covalent_radius = AtomicRadii.radii_covalent[b.atom_.element_];
+
+                    float distance = Vector3.Distance(a_position, b_position);
+                    if (distance <= a_covalent_radius + b_covalent_radius + 0.015)
                     {
-                        if (!(ia > ib)) continue;
-                        ISphere b = resiude_atoms[ib];
+                        bonds++;
+                        GameObject temp = Instantiate(prefab_bond, a_position, Quaternion.identity);
+                        temp.transform.parent = bonds_transform;
 
-                        Vector3 b_position = b.transform.position;
-                        float b_covalent_radius = AtomicRadii.radii_covalent[b.atom_.element_];
+                        Vector3 direction = b_position - a_position;
+                        Quaternion toRotation = Quaternion.FromToRotation(new Vector3(0, 1, 0), direction);
+                        temp.transform.rotation = toRotation;
 
-                        float distance = Vector3.Distance(a_position, b_position);
-                        if (distance <= a_covalent_radius + b_covalent_radius + 0.015)
-                        {
-                            bonds++;
-                            GameObject temp = Instantiate(prefab_bond, a_position, Quaternion.identity);
-                            temp.transform.parent = transform;
-
-                            Vector3 direction = b_position - a_position;
-                            Quaternion toRotation = Quaternion.FromToRotation(new Vector3(0, 1, 0), direction);
-                            temp.transform.rotation = toRotation;
-
-                            ICylinder icylinder = temp.GetComponent<ICylinder>();
-                            icylinder.radius_ = AtomicRadii.ball_and_stick_bond_radius;
-                            icylinder.height_ = distance;
-                        }
+                        ICylinder icylinder = temp.GetComponent<ICylinder>();
+                        icylinder.radius_ = AtomicRadii.ball_and_stick_bond_radius;
+                        icylinder.height_ = distance;
                     }
                 }
             }
         }
-
+        
         bonds_selected_[0] = null;
         bonds_selected_[1] = null;
+
+        SELECTION_MODE_SPHERE_RADIUS = AtomicRadii.ball_and_stick_radius * 4.5f;
 
         Debug.Log("Spawned: " + bonds + " bonds");
     }
@@ -148,14 +156,49 @@ public class Atoms : MonoBehaviour
         residue_dictionary[resiude].Add(sphere);
     }
 
+    public void VisualizationMethodButtonClick() {
+        if (visualization_method_ == VisualizationMethod.BALL_AND_STICK) SetVisualizationMethod(VisualizationMethod.SPACE_FILLING);
+        else SetVisualizationMethod(VisualizationMethod.BALL_AND_STICK);
+    }
+
+    /**
+        Change visualization method 
+    */
+    public void SetVisualizationMethod(VisualizationMethod method) {
+        visualization_method_ = method;
+
+        if (visualization_method_ == VisualizationMethod.BALL_AND_STICK) {
+            SELECTION_MODE_SPHERE_RADIUS = AtomicRadii.ball_and_stick_radius * 4.5f;
+            transform.GetChild(0).gameObject.SetActive(true);
+            foreach(ISphere s in ispheres_) {
+                s.SetRadius(AtomicRadii.ball_and_stick_radius);
+            }
+        } else {
+            SELECTION_MODE_SPHERE_RADIUS = 0.04f * 6.0f;
+            transform.GetChild(0).gameObject.SetActive(false);
+            foreach (ISphere s in ispheres_) {
+                s.SetAtomicRadius();
+            }
+        }
+        if (selection_plane_previous_ != null) {
+            SelectionPlane plane = selection_plane_previous_.GetComponent<SelectionPlane>();
+            plane.ChangeRadius();
+        }
+    }
+
     //void OnGUI()
     //{
-        //GUI.Label(new Rect(0, 0, 100, 100), (1.0f / Time.smoothDeltaTime).ToString());
+    //GUI.Label(new Rect(0, 0, 100, 100), (1.0f / Time.smoothDeltaTime).ToString());
     //}
 
     //Update is called once per frame
     void Update()
     {
+        if (Input.GetKey(KeyCode.Space)) {
+            bool ret = RayCastUIlayer();
+            if (ret) return;
+        }
+
         if (state == STATE.EXPLORING) {
             RaycastHit hit;
             /* 
@@ -166,6 +209,7 @@ public class Atoms : MonoBehaviour
             if (ret) {
                 ISphere isphere = hit.transform.GetComponent<ISphere>();
                 ICylinder icylinder = hit.transform.GetComponent<ICylinder>();
+                ButtonEvent button = hit.transform.GetComponent<ButtonEvent>();
                 Debug.DrawRay(Camera.main.transform.position, Camera.main.transform.forward * hit.distance, Color.white);
 
                 if (isphere != null) {
@@ -176,20 +220,7 @@ public class Atoms : MonoBehaviour
                         selected_atom_ = isphere;
                         state = STATE.SELECTED_ATOM;
 
-                        if (selection_plane_previous != null) Destroy(selection_plane_previous);
-
-                        selection_plane_previous = Instantiate(prefab_selection_plane, selected_atom_.transform.position, Quaternion.identity);
-                        selection_plane_previous.transform.parent = transform;
-                        SelectionPlane plane = selection_plane_previous.GetComponent<SelectionPlane>();
-
-                        ClearHighlighted();
-                        Collider[] hitColliders = Physics.OverlapSphere(selected_atom_.transform.position, SELECTION_MODE_SPHERE_RADIUS);
-                        foreach (Collider c in hitColliders) {
-                            ISphere s = c.gameObject.GetComponent<ISphere>();
-                            if (s == null || s == selected_atom_) continue;
-
-                            plane.AddSphere(s);
-                        }
+                        SpawnSelectionPlane();
 
                         return;
                     }
@@ -198,6 +229,8 @@ public class Atoms : MonoBehaviour
                         HighLight(isphere);
                     }
                 } else if (icylinder != null) {
+                    ClearHighlighted();
+
                     if (Input.GetMouseButtonDown(0) == true) {
                         bonds_selected_[bonds_selected_id_ % 2] = icylinder;
                         bonds_selected_id_++;
@@ -213,22 +246,27 @@ public class Atoms : MonoBehaviour
                         }
                     }
 
+                } else if (button != null) {
+                    ProcessRayCastUIHit(hit);
+                    ClearHighlighted();
                 }
-                
+
 
 
             } else {
                 ClearHighlighted();
-                previously_highlighted_atom_ = null;
                 //Debug.DrawRay(Camera.main.transform.position, Camera.main.transform.forward * 1000, Color.white);
             }
 
         } else if (state == STATE.SELECTED_ATOM) {
+            bool ret = RayCastUIlayer();
+            if (ret) return;
+
             if (Input.GetKeyDown(KeyCode.Escape) == true) {
                 ClearHighlighted();
                 selected_atom_ = null;
                 state = STATE.EXPLORING;
-                Destroy(selection_plane_previous);
+                Destroy(selection_plane_previous_);
                 return;
             }
 
@@ -240,8 +278,87 @@ public class Atoms : MonoBehaviour
                 MoveTowardsSelectedAtom(-speed_object_move);
             }
 
+        } else if (state == STATE.TORSION_ANGLE) {
+            RaycastHit hit;
+            /* 
+             * Perform ray casting towards the camera direction, move the ray origin slightly forward to avoid intersections with spheres that
+             * we are currently inside
+             */
+            bool ret = Physics.Raycast(Camera.main.transform.position + Camera.main.transform.forward * AtomicRadii.ball_and_stick_radius, Camera.main.transform.forward, out hit, 100.0f);
+            if (ret) {
+                ISphere isphere = hit.transform.GetComponent<ISphere>();
+                Debug.DrawRay(Camera.main.transform.position, Camera.main.transform.forward * hit.distance, Color.white);
+
+                if (isphere != null) {
+                    if (Input.GetMouseButtonDown(0) == true) {
+                        int last_atom_id = atom_selected_id_ % 4;
+                        if (atoms_selected_[last_atom_id] != null) atoms_selected_[last_atom_id].SetHighlighted(HighlightColors.HIGHLIGHT_COLOR.NO_HIGHLIGHT);
+
+                        atoms_selected_[last_atom_id] = isphere;
+                        atom_selected_id_++;
+
+                        isphere.SetHighlighted(HighlightColors.HIGHLIGHT_COLOR.GREEN);
+
+                        if (atoms_selected_[0] != null && atoms_selected_[1] != null && atoms_selected_[2] != null && atoms_selected_[3] != null) {
+
+                            GameObject temp = Instantiate(prefab_torsion_angle, isphere.transform.position, Quaternion.identity);
+
+                            TorsionAngle tangle = temp.GetComponent<TorsionAngle>();
+                            tangle.pos4_ = atoms_selected_[atom_selected_id_ % 4].transform.position;
+                            tangle.pos3_ = atoms_selected_[(atom_selected_id_ + 1)% 4].transform.position;
+                            tangle.pos2_ = atoms_selected_[(atom_selected_id_ + 2)% 4].transform.position;
+                            tangle.pos1_ = atoms_selected_[(atom_selected_id_ + 3)% 4].transform.position;
+                        }
+                    }
+
+                }
+
+            }
+
+
+
         }
+
         
+    }
+
+    private bool RayCastUIlayer() {
+        RaycastHit hit;
+        int layerMask = 1 << 5;
+        bool ret = Physics.Raycast(Camera.main.transform.position + Camera.main.transform.forward * AtomicRadii.ball_and_stick_radius, Camera.main.transform.forward, out hit, 100.0f, layerMask);
+        if (ret) {
+            ProcessRayCastUIHit(hit);
+            return true;
+        }
+        return false;
+    }
+
+    private void ProcessRayCastUIHit(RaycastHit hit) {
+        ButtonEvent button = hit.transform.GetComponent<ButtonEvent>();
+        if (button == null) return;
+
+        button.RayCastHover();
+        if (Input.GetMouseButtonDown(0) == true) {
+            button.RayCastHit();
+        }
+    }
+
+    private void SpawnSelectionPlane() {
+        if (selection_plane_previous_ != null) Destroy(selection_plane_previous_);
+
+        selection_plane_previous_ = Instantiate(prefab_selection_plane_, selected_atom_.transform.position, Quaternion.identity);
+        selection_plane_previous_.transform.parent = transform;
+        SelectionPlane plane = selection_plane_previous_.GetComponent<SelectionPlane>();
+        plane.center_sphere_ = selected_atom_;
+
+        ClearHighlighted();
+        Collider[] hitColliders = Physics.OverlapSphere(selected_atom_.transform.position, SELECTION_MODE_SPHERE_RADIUS);
+        foreach (Collider c in hitColliders) {
+            ISphere s = c.gameObject.GetComponent<ISphere>();
+            if (s == null || s == selected_atom_) continue;
+
+            plane.AddSphere(s);
+        }
     }
 
     private void MoveTowardsSelectedAtom(float speed) {
@@ -250,8 +367,10 @@ public class Atoms : MonoBehaviour
         /* Calculate the movement speed */
         speed = speed * Vector3.Distance(selected_atom_.transform.position, desired_position);
 
+        SelectionPlane plane = selection_plane_previous_.GetComponent<SelectionPlane>();
+        
         /* Change position */
-        Vector3 movement_direction = Vector3.Normalize(selected_atom_.transform.position - desired_position);
+        Vector3 movement_direction = Vector3.Normalize(plane.center_sphere_.transform.position - desired_position);
         transform.position = transform.position - speed * Time.deltaTime * movement_direction;
     }
 
@@ -321,11 +440,11 @@ public class Atoms : MonoBehaviour
             ClearHighlighted();
         }
 
-        isphere.SetHighlighted(true);
+        isphere.SetHighlighted(HighlightColors.HIGHLIGHT_COLOR.WHITE);
         highlighted_spheres_.Add(isphere);
         foreach (ISphere s in residue_dictionary[isphere.atom_.res_seq_])
         {
-            s.SetHighlighted(true);
+            s.SetHighlighted(HighlightColors.HIGHLIGHT_COLOR.WHITE);
             highlighted_spheres_.Add(s);
         }
         previously_highlighted_atom_ = isphere;
@@ -335,9 +454,10 @@ public class Atoms : MonoBehaviour
     {
         foreach (ISphere s in highlighted_spheres_)
         {
-            s.SetHighlighted(false);
+            s.SetHighlighted(HighlightColors.HIGHLIGHT_COLOR.NO_HIGHLIGHT);
         }
         highlighted_spheres_.Clear();
+        previously_highlighted_atom_ = null;
     }
 
 }

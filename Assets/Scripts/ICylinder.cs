@@ -13,7 +13,6 @@ public class ICylinder : MonoBehaviour
     
     /* Correction applied to the above properties */
     private float radius_correction_ = 2.2f;
-    private float height_correction_ = 1.0f;
 
     /* A reference to the material property block of that impostor cylinder */
     private MaterialBlockCylinder material_block_;
@@ -38,7 +37,7 @@ public class ICylinder : MonoBehaviour
     {
         /* Set radius in material property block */
         radius_ = radius;
-        transform.localScale = new Vector3(radius_ * radius_correction_, height_ * height_correction_, radius_ * radius_correction_);
+        transform.localScale = new Vector3(radius_ * radius_correction_, height_, radius_ * radius_correction_);
         material_block_.SetRadius(radius);
 
         /* Set collision radius */
@@ -50,12 +49,15 @@ public class ICylinder : MonoBehaviour
     {
         /* Set height in material property block */
         height_ = height;
-        transform.localScale = new Vector3(radius_ * radius_correction_, height_ * height_correction_, radius_ * radius_correction_);
-        material_block_.SetHeight(height);
+        transform.localScale = new Vector3(radius_ * radius_correction_, height_, radius_ * radius_correction_);
 
         /* Set height in collision */
         float scaling = transform.localScale.y;
         GetComponent<CapsuleCollider>().height = height/ scaling;
+    }
+
+    public void SetHighlighted(HighlightColors.HIGHLIGHT_COLOR color) {
+        material_block_.SetHighlighted(HighlightColors.GetColorValue(color));
     }
 
     /* Calculate a transform for that coordinate space defined by this cylinder, currently NOT USED */

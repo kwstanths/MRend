@@ -22,12 +22,9 @@ public class ISphere : MonoBehaviour
         material_block_ = GetComponent<MaterialBlockSphere>();
         SetCPKColor();
 
-        if (GetComponentInParent<Atoms>().GetVisualizationMethod() == VisualizationMethod.SPACE_FILLING)
-        {
+        if (GetComponentInParent<Atoms>().GetVisualizationMethod() == VisualizationMethod.SPACE_FILLING) {
             SetAtomicRadius();
-        }
-        else
-        {
+        } else {
             SetRadius(AtomicRadii.ball_and_stick_radius);
         }
     }
@@ -36,9 +33,9 @@ public class ISphere : MonoBehaviour
         material_block_.SetColor(color);
     }
 
-    public void SetHighlighted(bool is_highlighted)
+    public void SetHighlighted(HighlightColors.HIGHLIGHT_COLOR color)
     {
-        material_block_.SetHighlighted(is_highlighted);
+        material_block_.SetHighlighted(HighlightColors.GetColorValue(color));
     }
 
     public void SetRadius(float radius)

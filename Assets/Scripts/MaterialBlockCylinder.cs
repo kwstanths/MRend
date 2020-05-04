@@ -8,8 +8,8 @@ public class MaterialBlockCylinder : MonoBehaviour
     private MaterialPropertyBlock property_block;
     /* Property 1: RGB = albedo, A = radius */
     public Color _Albedo = new Color(0.5f, 0, 0, 0.015f);
-    /* Property 2: R = height, G = ambient, B = metallic, A = glossiness */
-    public Color _RadiusAndShading = new Color(0.07f, 0.7f, 0, 0);
+    /* Property 2: R = Is highlighted or not, G = ambient, B = metallic, A = glossiness */
+    public Color _RadiusAndShading = new Color(0.0f, 0.7f, 0, 0);
 
     public void SetColor(Color color)
     {
@@ -26,9 +26,11 @@ public class MaterialBlockCylinder : MonoBehaviour
         SetPropertyBlock();
     }
 
-    public void SetHeight(float height)
-    {
-        _RadiusAndShading.r = height;
+    public void SetHighlighted(float is_highlighted) {
+        /* If it's the same then return */
+        //if (is_highlighted !=_Albedo.a) return;
+
+        _RadiusAndShading.r = is_highlighted;
         SetPropertyBlock();
     }
 

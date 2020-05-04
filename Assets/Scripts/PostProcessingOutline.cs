@@ -5,7 +5,7 @@ using UnityEngine;
 using UnityEngine.Rendering.PostProcessing;
 
 [Serializable]
-[PostProcess(typeof(OutlineRenderer), PostProcessEvent.AfterStack, "Custom/Outline")]
+[PostProcess(typeof(OutlineRenderer), PostProcessEvent.BeforeTransparent, "Custom/Outline")]
 public sealed class PostProcessingOutline : PostProcessEffectSettings
 {
     [Tooltip("Thickness")]
