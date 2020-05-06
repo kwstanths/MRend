@@ -15,10 +15,6 @@ public class SelectionPlane : MonoBehaviour
     [SerializeField] GameObject prefab_arrow_left;
     [SerializeField] GameObject prefab_arrow_top_left;
 
-    [SerializeField] GameObject prefab_atom_info_box_ = null;
-    GameObject atom_info_box_gameobject_;
-    AtomInfoBox atom_info_box_;
-
     public enum VisualizationMethod
     {
         COLOR_CIRCLE,
@@ -57,6 +53,8 @@ public class SelectionPlane : MonoBehaviour
     Color color_bottom_left = new Color(0.27f, 0.72f, 0.56f);
     Color color_left = new Color(0.96f, 0.56f, 0.12f);
     Color color_top_left = new Color(0, 0, 1);
+
+    AtomInfoBox info_ui_;
 
     void Start() {
         /* Set the scale based on the selection radius used */
@@ -102,25 +100,14 @@ public class SelectionPlane : MonoBehaviour
             arrows_[2, 2].transform.parent = transform;
 
         }
-        
-        //atom_info_box_gameobject_ = Instantiate(prefab_atom_info_box_, transform.position + Camera.main.transform.right * (Atoms.SELECTION_MODE_SPHERE_RADIUS + 0.08f), Quaternion.identity);
-        //atom_info_box_ = atom_info_box_gameobject_.GetComponent<AtomInfoBox>();
 
-        //SetAtomInfoBoxText();
+        info_ui_ = Camera.main.transform.Find("AtomInfoBox").GetComponent<AtomInfoBox>();
     }
-
-    //private void SetAtomInfoBoxText() {
-
-    //    atom_info_box_.SetElementText(center_sphere_.atom_.element_);
-    //    atom_info_box_.SetAtomNameText(center_sphere_.atom_.name_);
-    //    atom_info_box_.SetResidueName(center_sphere_.atom_.res_name_);
-    //}
 
     void Update() {
         CalculateInverseTransform();
 
         center_sphere_.SetHighlighted(HighlightColors.HIGHLIGHT_COLOR.GREEN);
-        //atom_info_box_.SetPosition(center_sphere_, Camera.main.transform.right);
 
         /* Calculate positions and reset colors and highlighting */
         plane_positions_ = new List<Vector3>(spheres_.Count);
@@ -198,7 +185,7 @@ public class SelectionPlane : MonoBehaviour
         spheres_.Clear();
 
         center_sphere_ = s;
-        //SetAtomInfoBoxText();
+        info_ui_.SetAtom(s);
 
         /* Get the new spheres within radius */
         Collider[] hitColliders = Physics.OverlapSphere(this.transform.position, Atoms.SELECTION_MODE_SPHERE_RADIUS);
@@ -297,7 +284,6 @@ public class SelectionPlane : MonoBehaviour
                 }
             }
         }
-        //Destroy(atom_info_box_gameobject_);
     }
 
     private void ClearHighlightedAndSetCPKColor() {

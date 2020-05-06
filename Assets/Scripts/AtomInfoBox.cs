@@ -3,67 +3,71 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
+
 public class AtomInfoBox : MonoBehaviour
 {
-    Canvas canvas_ = null;
-    RectTransform canvas_transform_ = null;
+    Canvas canvas_;
 
     Text text_element_;
-    Text text_atom_name_;
     Text text_residue_;
-    ButtonEvent button_visualization_;
+    Text text_atom_name_;
+    Text text_chain_;
+    Text text_occupancy_;
+    Text text_temp_factor_;
 
-    private void Awake() {
+    // Start is called before the first frame update
+    void Start()
+    {
         canvas_ = GetComponentInChildren<Canvas>();
-        canvas_transform_ = canvas_.GetComponent<RectTransform>();
-        text_element_ = canvas_.transform.Find("element").GetComponent<Text>();
-        text_atom_name_ = canvas_.transform.Find("atom_name").GetComponent<Text>();
-        text_residue_ = canvas_.transform.Find("residue").GetComponent<Text>();
-        button_visualization_ = canvas_.transform.Find("ButtonVisualization").GetComponent<ButtonEvent>();
+        text_element_ = canvas_.transform.Find("Element").GetComponent<Text>();
+        text_residue_ = canvas_.transform.Find("Residue").GetComponent<Text>();
+        text_atom_name_ = canvas_.transform.Find("AtomName").GetComponent<Text>();
+        text_occupancy_ = canvas_.transform.Find("Occupancy").GetComponent<Text>();
+        text_temp_factor_ = canvas_.transform.Find("TempFactor").GetComponent<Text>();
+        text_chain_ = canvas_.transform.Find("Chain").GetComponent<Text>();
+
+
+        transform.rotation = Quaternion.LookRotation(Camera.main.transform.forward);
     }
 
-    void Update() {
-        transform.rotation = Quaternion.LookRotation(transform.position - Camera.main.transform.position);
-
-        float distance_to_camera = Vector3.Distance(transform.position, Camera.main.transform.position);
-        transform.localScale = new Vector3(0.2f, 0.2f, 0.2f) + new Vector3(distance_to_camera, distance_to_camera, distance_to_camera) * 0.35f;
-
-        bool ignore_z_test = Input.GetKey(KeyCode.Space);
-        IgnoreZText[] texts = GetComponentsInChildren<IgnoreZText>();
-        foreach (IgnoreZText t in texts) {
-            t.DoZTest(!ignore_z_test);
-        }
-        IgnoreZImage[] images = GetComponentsInChildren<IgnoreZImage>();
-        foreach (IgnoreZImage t in images) {
-            t.DoZTest(!ignore_z_test);
-
-        }
-
-        button_visualization_.RayCastHoverOff();
+    // Update is called once per frame
+    void Update()
+    {
+        
     }
 
-    public float GetHalfSizeX() {
-        if (canvas_ == null) {
-            print("AtomInfoBox: Canvas is null");
-            return 0.0f;
-        }
-
-        return transform.localScale.x * canvas_.transform.localScale.x * canvas_transform_.sizeDelta.x / 2;
+    public void SetAtom(ISphere s) {
+        SetElement(s.atom_.element_);
+        SetResiude(s.atom_.res_name_);
+        SetAtomName(s.atom_.name_);
+        SetChain(s.atom_.chain_id_.ToString());
+        SetOccupancy(s.atom_.occupancy_.ToString("F2"));
+        SetTempFactor(s.atom_.temp_factor_.ToString("F1"));
     }
 
-    public void SetPosition(ISphere s, Vector3 Right) {
-        transform.position = s.transform.position + Right * (Atoms.SELECTION_MODE_SPHERE_RADIUS + 0.06f + GetHalfSizeX());
+    public void SetElement(string text) {
+        string name = AtomNames.GetFullName(text);
+        text_element_.text = name;
     }
 
-    public void SetElementText(string e) {
-        text_element_.text = AtomNames.GetFullName(e);
+    public void SetResiude(string text) {
+        text_residue_.text = text;
     }
 
-    public void SetAtomNameText(string e) {
-        text_atom_name_.text = "Name: " + e;
+    public void SetAtomName(string text) {
+        text_atom_name_.text = text;
     }
 
-    public void SetResidueName(string e) {
-        text_residue_.text = "Residue: " + e;
+    public void SetChain(string text) {
+        text_chain_.text = "Chain: " + text;
     }
+
+    public void SetOccupancy(string text) {
+        text_occupancy_.text = "Occupancy: " + text;
+    }
+
+    public void SetTempFactor(string text) {
+        text_temp_factor_.text = "Temp. Factor: " + text;
+    }
+
 }

@@ -36,6 +36,7 @@ public class Atoms : MonoBehaviour
 
     /* Exploring mode paramters */
     private ISphere previously_highlighted_atom_ = null;
+    private ICylinder previously_highlighted_bond_ = null;
     private ISphere selected_atom_ = null;
     /* Arc parameters */
     [SerializeField] GameObject prefab_arc_ = null;
@@ -52,6 +53,8 @@ public class Atoms : MonoBehaviour
     int atom_selected_id_ = 0;
     [SerializeField] GameObject prefab_torsion_angle = null;
 
+    AtomInfoBox info_ui_;
+
     public float speed_object_move = 1;
 
     void Start()
@@ -62,10 +65,15 @@ public class Atoms : MonoBehaviour
         //PDBParser.ParseAtomsAndConnections(@"Assets/MModels/4f0h.pdb", out atoms, out connections);
         //PDBParser.ParseAtomsAndConnections(@"Assets/MModels/1s5l.pdb", out atoms, out connections);
 
+        Bounds atoms_bounding_box = new Bounds();
+
         foreach (Atom atom in atoms)
         {
+            Vector3 atom_position = new Vector3(atom.x_, atom.y_, atom.z_);
+            atoms_bounding_box.Encapsulate(atom_position);
+
             /* Instantiate the object */
-            GameObject temp = Instantiate(prefab_atom, new Vector3(atom.x_, atom.y_, atom.z_), Quaternion.identity);
+            GameObject temp = Instantiate(prefab_atom, atom_position, Quaternion.identity);
             temp.transform.parent = transform;
 
             /* Find ISphere component, and set the atom */
@@ -107,7 +115,7 @@ public class Atoms : MonoBehaviour
                     float b_covalent_radius = AtomicRadii.radii_covalent[b.atom_.element_];
 
                     float distance = Vector3.Distance(a_position, b_position);
-                    if (distance <= a_covalent_radius + b_covalent_radius + 0.015)
+                    if (distance <= a_covalent_radius + b_covalent_radius + 0.016)
                     {
                         bonds++;
                         GameObject temp = Instantiate(prefab_bond, a_position, Quaternion.identity);
@@ -124,13 +132,25 @@ public class Atoms : MonoBehaviour
                 }
             }
         }
-        
+
+        SetCameraAndPanelBoxPosition(atoms_bounding_box);
+
         bonds_selected_[0] = null;
         bonds_selected_[1] = null;
 
         SELECTION_MODE_SPHERE_RADIUS = AtomicRadii.ball_and_stick_radius * 4.5f;
 
+        info_ui_ = Camera.main.transform.Find("AtomInfoBox").GetComponent<AtomInfoBox>();
+
         Debug.Log("Spawned: " + bonds + " bonds");
+    }
+    
+    private void SetCameraAndPanelBoxPosition(Bounds atoms_bounds) {
+        Camera.main.transform.position = atoms_bounds.center + (atoms_bounds.extents.z + 0.7f) * new Vector3(0, 0, 1);
+        Camera.main.transform.LookAt(atoms_bounds.center);
+
+        Transform panel_box = transform.Find("Panel");
+        panel_box.transform.position = atoms_bounds.center + (atoms_bounds.extents.x + 2) * Camera.main.transform.right;
     }
 
     public VisualizationMethod GetVisualizationMethod()
@@ -226,13 +246,28 @@ public class Atoms : MonoBehaviour
                     }
 
                     if (isphere != previously_highlighted_atom_) {
+                        info_ui_.SetAtom(isphere);
                         HighLight(isphere);
                     }
                 } else if (icylinder != null) {
                     ClearHighlighted();
 
+                    if (icylinder != bonds_selected_[0] && icylinder != bonds_selected_[1]) {
+                        icylinder.SetHighlighted(HighlightColors.HIGHLIGHT_COLOR.WHITE);
+                        previously_highlighted_bond_ = icylinder;
+                    }
+
                     if (Input.GetMouseButtonDown(0) == true) {
+                        previously_highlighted_bond_ = null;
+
+                        ICylinder previous = bonds_selected_[bonds_selected_id_ % 2];
+                        if (previous != null) {
+                            previous.SetHighlighted(HighlightColors.HIGHLIGHT_COLOR.NO_HIGHLIGHT);
+                        }
+
+                        icylinder.SetHighlighted(HighlightColors.HIGHLIGHT_COLOR.BLUE);
                         bonds_selected_[bonds_selected_id_ % 2] = icylinder;
+
                         bonds_selected_id_++;
 
                         if (bonds_selected_[0] != null && bonds_selected_[1] != null &&  bonds_selected_[0] != bonds_selected_[1]) 
@@ -458,6 +493,9 @@ public class Atoms : MonoBehaviour
         }
         highlighted_spheres_.Clear();
         previously_highlighted_atom_ = null;
+
+        if (previously_highlighted_bond_ != null) previously_highlighted_bond_.SetHighlighted(HighlightColors.HIGHLIGHT_COLOR.NO_HIGHLIGHT);
+        previously_highlighted_bond_ = null;
     }
 
 }

@@ -32,7 +32,7 @@ public class AtomicRadii
         {"FE", 0.140f },
 
         /* Deuterium is not present in the atomic table, but some atoms in PDB files are of this type */
-        {"D",  2.1f * 0.000001f },
+        {"D",  0.025f },
     };
 
     public static Dictionary<string, float> radii_vanderwaals = new Dictionary<string, float>(){

@@ -8,7 +8,7 @@ public class HighlightColors
     {
         NO_HIGHLIGHT = 0,
         WHITE = 1,
-        RED = 2,
+        BLUE = 2,
         GREEN = 3,
     }
     static float[] highlight_values_ = { 0, 1, 0.6f, 0.3f };

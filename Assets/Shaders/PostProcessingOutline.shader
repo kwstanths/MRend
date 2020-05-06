@@ -14,8 +14,8 @@
 
     float4 GetHighlightColor(float texture_value) {
         if (texture_value > 0.7) return float4(1, 1, 1, 1);
-        else if (texture_value > 0.4) return float4(0.8, 0, 0, 1);
-        else return float4(0, 0.8, 0, 1);
+        else if (texture_value > 0.4) return float4(0, 0, 1, 1);
+        else return float4(0, 0.9, 0, 1);
     }
 
     float4 Frag(VaryingsDefault i) : SV_Target
