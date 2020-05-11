@@ -12,13 +12,14 @@ GameObject:
   - component: {fileID: 235823018}
   - component: {fileID: 235823017}
   - component: {fileID: 235823020}
+  - component: {fileID: 7184000344416537265}
   m_Layer: 0
   m_Name: Quad
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &235823019
 Transform:
   m_ObjectHideFlags: 0
@@ -28,7 +29,7 @@ Transform:
   m_GameObject: {fileID: 235823015}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1.33, y: 1.33, z: 1.33}
+  m_LocalScale: {x: 1.2, y: 1.2, z: 1.2}
   m_Children: []
   m_Father: {fileID: 8805392133184943695}
   m_RootOrder: 0
@@ -90,6 +91,18 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 92a9a34730afb764b8d19b47d53e2f65, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &7184000344416537265
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 235823015}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5c34a9d6de418614db26ac861ff19a6c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
 --- !u!1 &8805392133184943683
@@ -229,7 +242,5 @@ MonoBehaviour:
   prefab_arrow_left: {fileID: 9147316309100146372, guid: 3e19602868e2f1144aa7a66278e0640f,
     type: 3}
   prefab_arrow_top_left: {fileID: 9208877550931296321, guid: 31fecdd3130152745a6916c78bfa6c13,
-    type: 3}
-  prefab_atom_info_box_: {fileID: 1382898882758859045, guid: aabcfa5f55009f844a8c0d81dbc7a4cf,
     type: 3}
   center_sphere_: {fileID: 0}

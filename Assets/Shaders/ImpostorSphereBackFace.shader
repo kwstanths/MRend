@@ -91,7 +91,7 @@
 
                 float3 color = DirectionalLightColor(light, normal_world, view_direction, albedo.xyz);
                 
-                return half4(color, 0.35);
+                return half4(color, 0.2);
             }
             ENDCG
         }
@@ -163,7 +163,7 @@
 
                 float3 color = PointLightColor(light, position_world, normal_world, view_direction, albedo.xyz);
 
-                return half4(color, 0.35);
+                return half4(color, 0.2);
             }
             ENDCG
         }

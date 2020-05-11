@@ -20,7 +20,7 @@ public class SelectionPlane : MonoBehaviour
         COLOR_CIRCLE,
         ARROWS,
     }
-    VisualizationMethod visualization = VisualizationMethod.ARROWS;
+    public VisualizationMethod visualization = VisualizationMethod.ARROWS;
 
     public ISphere center_sphere_;
 
@@ -45,14 +45,14 @@ public class SelectionPlane : MonoBehaviour
     float drag_x_ = 0;
     float drag_y_ = 0;
 
-    Color color_top = new Color(1, 0, 0);
-    Color color_top_right = new Color(0.74f, 0.85f, 0.28f);
-    Color color_right = new Color(0, 0.58f, 0.85f);
-    Color color_bottom_right = new Color(1, 1, 0);
-    Color color_bottom = new Color(0.52f, 0.27f, 0.6f);
-    Color color_bottom_left = new Color(0.27f, 0.72f, 0.56f);
-    Color color_left = new Color(0.96f, 0.56f, 0.12f);
-    Color color_top_left = new Color(0, 0, 1);
+    Color color_top = new Color(0.4f, 0.69f, 1);
+    Color color_top_right = new Color(1, 0.6f, 1);
+    Color color_right = new Color(0.4f, 0.4f, 0);
+    Color color_bottom_right = new Color(0.37f, 0.37f, 0.37f);
+    Color color_bottom = new Color(0.4f, 0, 0.2f);
+    Color color_bottom_left = new Color(0, 0.6f, 0.6f);
+    Color color_left = new Color(0.4f, 0.2f, 0);
+    Color color_top_left = new Color(0.2f, 0.4f, 0);
 
     AtomInfoBox info_ui_;
 
@@ -66,41 +66,53 @@ public class SelectionPlane : MonoBehaviour
         s.SetRadius(Atoms.SELECTION_MODE_SPHERE_RADIUS);
         s.SetColor(new Color(0.1f, 0.1f, 0.1f, 0));
 
-        if (visualization == VisualizationMethod.COLOR_CIRCLE) {
-            colors_ = new Color[3, 3];
-            colors_[0, 0] = color_bottom_left;
-            colors_[0, 1] = color_bottom;
-            colors_[0, 2] = color_bottom_right;
-            colors_[1, 0] = color_left;
-            colors_[1, 2] = color_right;
-            colors_[2, 0] = color_top_left;
-            colors_[2, 1] = color_top;
-            colors_[2, 2] = color_top_right;
+        /* Set color circle parameters */
+        colors_ = new Color[3, 3];
+        colors_[0, 0] = color_bottom_left;
+        colors_[0, 1] = color_bottom;
+        colors_[0, 2] = color_bottom_right;
+        colors_[1, 0] = color_left;
+        colors_[1, 2] = color_right;
+        colors_[2, 0] = color_top_left;
+        colors_[2, 1] = color_top;
+        colors_[2, 2] = color_top_right;
+        
+        /* Set arrow parameters */
+        arrows_ = new GameObject[3, 3];
+        arrows_[0, 0] = Instantiate(prefab_arrow_bottom_left, new Vector3(0, 0, 0), Quaternion.identity);
+        arrows_[0, 1] = Instantiate(prefab_arrow_bottom, new Vector3(0, 0, 0), Quaternion.identity);
+        arrows_[0, 2] = Instantiate(prefab_arrow_bottom_right, new Vector3(0, 0, 0), Quaternion.identity);
+        arrows_[1, 0] = Instantiate(prefab_arrow_left, new Vector3(0, 0, 0), Quaternion.identity);
+        arrows_[1, 2] = Instantiate(prefab_arrow_right, new Vector3(0, 0, 0), Quaternion.identity);
+        arrows_[2, 0] = Instantiate(prefab_arrow_top_left, new Vector3(0, 0, 0), Quaternion.identity);
+        arrows_[2, 1] = Instantiate(prefab_arrow_top, new Vector3(0, 0, 0), Quaternion.identity);
+        arrows_[2, 2] = Instantiate(prefab_arrow_top_right, new Vector3(0, 0, 0), Quaternion.identity);
+        
+        arrows_[0, 0].transform.parent = transform;
+        arrows_[0, 1].transform.parent = transform;
+        arrows_[0, 2].transform.parent = transform;
+        arrows_[1, 0].transform.parent = transform;
+        arrows_[1, 2].transform.parent = transform;
+        arrows_[2, 0].transform.parent = transform;
+        arrows_[2, 1].transform.parent = transform;
+        arrows_[2, 2].transform.parent = transform;
+
+        arrows_[0, 0].SetActive(false);
+        arrows_[0, 1].SetActive(false);
+        arrows_[0, 2].SetActive(false);
+        arrows_[1, 0].SetActive(false);
+        arrows_[1, 2].SetActive(false);
+        arrows_[2, 0].SetActive(false);
+        arrows_[2, 1].SetActive(false);
+        arrows_[2, 2].SetActive(false);
+
+        if (visualization == VisualizationMethod.ARROWS) {
+            transform.GetChild(0).gameObject.SetActive(false);
+        } else {
+            transform.GetChild(0).gameObject.SetActive(true);
         }
-        else {
-            //transform.GetChild(0).gameObject.SetActive(false);
 
-            arrows_ = new GameObject[3, 3];
-            arrows_[0, 0] = Instantiate(prefab_arrow_bottom_left, new Vector3(0, 0, 0), Quaternion.identity);
-            arrows_[0, 1] = Instantiate(prefab_arrow_bottom, new Vector3(0, 0, 0), Quaternion.identity);
-            arrows_[0, 2] = Instantiate(prefab_arrow_bottom_right, new Vector3(0, 0, 0), Quaternion.identity);
-            arrows_[1, 0] = Instantiate(prefab_arrow_left, new Vector3(0, 0, 0), Quaternion.identity);
-            arrows_[1, 2] = Instantiate(prefab_arrow_right, new Vector3(0, 0, 0), Quaternion.identity);
-            arrows_[2, 0] = Instantiate(prefab_arrow_top_left, new Vector3(0, 0, 0), Quaternion.identity);
-            arrows_[2, 1] = Instantiate(prefab_arrow_top, new Vector3(0, 0, 0), Quaternion.identity);
-            arrows_[2, 2] = Instantiate(prefab_arrow_top_right, new Vector3(0, 0, 0), Quaternion.identity);
-
-            arrows_[0, 0].transform.parent = transform;
-            arrows_[0, 1].transform.parent = transform;
-            arrows_[0, 2].transform.parent = transform;
-            arrows_[1, 0].transform.parent = transform;
-            arrows_[1, 2].transform.parent = transform;
-            arrows_[2, 0].transform.parent = transform;
-            arrows_[2, 1].transform.parent = transform;
-            arrows_[2, 2].transform.parent = transform;
-
-        }
-
+        /* Get info box object */
         info_ui_ = Camera.main.transform.Find("AtomInfoBox").GetComponent<AtomInfoBox>();
     }
 
@@ -155,14 +167,36 @@ public class SelectionPlane : MonoBehaviour
         }
     }
 
+    public void ChangeVisualization() {
+        if (visualization == VisualizationMethod.ARROWS) {
+            for (int i = 0; i < 3; i++) {
+                for (int j = 0; j < 3; j++) {
+                    if (i != 1 || j != 1) {
+                        arrows_[i, j].SetActive(false);
+                    }
+                }
+            }
+            visualization = VisualizationMethod.COLOR_CIRCLE;
+            transform.GetChild(0).gameObject.SetActive(true);
+        } else {
+            visualization = VisualizationMethod.ARROWS;
+            transform.GetChild(0).gameObject.SetActive(false);
+        }
+    }
+
     public void ChangeRadius() {
         transform.localScale = 2 * new Vector3(Atoms.SELECTION_MODE_SPHERE_RADIUS, Atoms.SELECTION_MODE_SPHERE_RADIUS, Atoms.SELECTION_MODE_SPHERE_RADIUS);
         
         /* Make the sphere transparent */
         ISphere s = GetComponent<ISphere>();
         s.SetRadius(Atoms.SELECTION_MODE_SPHERE_RADIUS);
-        
+
         /* Clear spheres */
+        for (int i = 0; i < spheres_.Count; i++) {
+            ISphere sphere = spheres_[i];
+            sphere.SetHighlighted(0);
+            sphere.SetCPKColor();
+        }
         spheres_.Clear();
 
         /* Get the new spheres within radius */
@@ -279,7 +313,7 @@ public class SelectionPlane : MonoBehaviour
         ClearHighlightedAndSetCPKColor();
         for (int i = 0; i < 3; i++) {
             for (int j = 0; j < 3; j++) {
-                if (visualization == VisualizationMethod.ARROWS && (i != 1 || j != 1)) {
+                if (i != 1 || j != 1) {
                     Destroy(arrows_[i, j]);
                 }
             }
@@ -314,10 +348,6 @@ public class SelectionPlane : MonoBehaviour
         temp.SetColumn(2, new Vector4(Z.x, Z.y, Z.z, 0));
         temp.SetColumn(3, new Vector4(O.x, O.y, O.z, 1));
         ITM_ = Matrix4x4.Inverse(temp);
-
-        Debug.DrawLine(transform.position, transform.position + X * 0.25f, new Color(1, 0, 0));
-        Debug.DrawLine(transform.position, transform.position + Y * 0.25f, new Color(0, 1, 0));
-        Debug.DrawLine(transform.position, transform.position + Z * 0.25f, new Color(0, 0, 1));
     }
 
 

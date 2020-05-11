@@ -11,39 +11,58 @@ public class TorsionAngle : MonoBehaviour
 
     [SerializeField] GameObject prefab_arc = null;
 
-    Vector3 middle, dir1, dir2;
+    Vector3 normal1_, normal2_;
+    Vector3 dir1_, dir2_;
+
+    private LineRenderer lr_;
+    TorsionPlane plane1_;
 
     // Start is called before the first frame update
     void Start()
     {
-        Vector3 n1 = Vector3.Normalize(GetPlaneNormal(pos1_, pos2_, pos3_));
-        Vector3 n2 = Vector3.Normalize(GetPlaneNormal(pos2_, pos3_, pos4_));
-        float angle = Mathf.Acos(Vector3.Dot(n1, n2));
-        float sign = Mathf.Sign(Vector3.Dot(n1, pos1_ - pos2_));
-        print( sign * angle * Mathf.Rad2Deg);
-
-        middle = (pos2_ + pos3_) / 2;
-
-        GameObject temp = Instantiate(prefab_arc, middle, Quaternion.identity);
-        ArcRenderer arc = temp.GetComponent<ArcRenderer>();
-
-        dir1 = -Vector3.Cross(n1, pos3_ - pos2_);
-        dir2 = -Vector3.Cross(n2, pos2_ - pos3_);
-        arc.X_ = dir1;
-        arc.W_ = dir2;
-        arc.Radius_ = 0.05f;
+        normal1_ = Vector3.Normalize(GetPlaneNormal(pos1_, pos2_, pos3_));
+        normal2_ = Vector3.Normalize(GetPlaneNormal(pos2_, pos3_, pos4_));
+        float angle = Mathf.Acos(Vector3.Dot(normal1_, normal2_));
+        float sign = Mathf.Sign(Vector3.Dot(normal2_, pos1_ - pos2_));
 
         Transform p1 = transform.GetChild(0);
-        Transform p2 = transform.GetChild(1);
+        plane1_ = p1.GetComponent<TorsionPlane>();
+        plane1_.pos1_ = pos3_;
+        plane1_.pos2_ = pos2_;
+        plane1_.pos3_ = pos1_;
 
-        transform.position = middle;   
-        p1.rotation = Quaternion.LookRotation(n1, dir1);
-        p2.rotation = Quaternion.LookRotation(n2, dir2);
+        Transform p2 = transform.GetChild(1);
+        TorsionPlane plane2 = p2.GetComponent<TorsionPlane>();
+        plane2.pos1_ = pos2_;
+        plane2.pos2_ = pos3_;
+        plane2.pos3_ = pos4_;
+
+        lr_ = GetComponent<LineRenderer>();
+        lr_.positionCount = 0;
+        lr_.startWidth = 0.003f;
+        lr_.endWidth = 0.003f;
+
+        GameObject temp = Instantiate(prefab_arc, (pos2_ + pos3_) / 2, Quaternion.identity);
+        ArcRenderer arc = temp.GetComponent<ArcRenderer>();
+
+        dir1_ = Vector3.Normalize(-Vector3.Cross(normal1_, Vector3.Normalize(pos2_ - pos3_)));
+        dir2_ = Vector3.Normalize(-Vector3.Cross(normal2_, Vector3.Normalize(pos2_ - pos3_)));
+
+        arc.X_ = dir1_;
+        arc.W_ = dir2_;
+        arc.Radius_ = 0.065f;
+        arc.angle_positive_ = sign > 0;
     }
 
     private void Update() {
-        Debug.DrawLine(middle, middle + 10 * dir1);
-        Debug.DrawLine(middle, middle + 10 * dir2);
+        if (lr_.positionCount == 0) {
+            Vector3 A, B;
+            plane1_.GetAxisPoints(out A, out B);
+
+            lr_.positionCount = 2;
+            Vector3[] points = new Vector3[] { A, B };
+            lr_.SetPositions(points);
+        }
     }
 
     Vector3 GetPlaneNormal(Vector3 t1, Vector3 t2, Vector3 t3) {

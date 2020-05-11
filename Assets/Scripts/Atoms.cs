@@ -9,6 +9,12 @@ public enum VisualizationMethod
     BALL_AND_STICK,
 }
 
+public enum ExploringMethod
+{
+    EXPLORING_RESIDUES,
+    EXPLORING_CHAINS,
+}
+
 public class Atoms : MonoBehaviour
 {
     public static float SELECTION_MODE_SPHERE_RADIUS;
@@ -23,8 +29,10 @@ public class Atoms : MonoBehaviour
     private Dictionary<string, List<ISphere>> atoms_dictionary = new Dictionary<string, List<ISphere>>();
     /* A dictionary that holds the resiude id, and all the ISphere objects that form it */
     private Dictionary<int, List<ISphere>> residue_dictionary = new Dictionary<int, List<ISphere>>();
-    /* A list that holds the currently highlighted spehres */
-    private List<ISphere> highlighted_spheres_ = new List<ISphere>();
+    /* A dictionary that holds the chain id, and all the ISphere objects that form it */
+    private Dictionary<char, List<ISphere>> chains_dictionary = new Dictionary<char, List<ISphere>>();
+    /* A set that holds the currently highlighted spehres */
+    private HashSet<ISphere> highlighted_spheres_ = new HashSet<ISphere>();
 
     public enum STATE
     {
@@ -35,7 +43,7 @@ public class Atoms : MonoBehaviour
     private STATE state = STATE.EXPLORING;
 
     /* Exploring mode paramters */
-    private ISphere previously_highlighted_atom_ = null;
+    ExploringMethod exploring_state = ExploringMethod.EXPLORING_RESIDUES;
     private ICylinder previously_highlighted_bond_ = null;
     private ISphere selected_atom_ = null;
     /* Arc parameters */
@@ -47,6 +55,7 @@ public class Atoms : MonoBehaviour
     /* Selected atom paramters */
     [SerializeField] GameObject prefab_selection_plane_ = null;
     GameObject selection_plane_previous_ = null;
+    SelectionPlane.VisualizationMethod selection_visualization_ = SelectionPlane.VisualizationMethod.ARROWS;
 
     /* Torsion angle paramters */
     ISphere[] atoms_selected_ = new ISphere[4];
@@ -81,9 +90,10 @@ public class Atoms : MonoBehaviour
             isphere.atom_ = atom;
             ispheres_.Add(isphere);
 
-            /* Insert to dictionary */
+            /* Insert to dictionaries */
             InsertToAtomsDictionary(isphere);
             InsertToResiudesDictionary(isphere);
+            InsertToChainsDictionary(isphere);
         }
 
         foreach (List<int> c in connections)
@@ -138,7 +148,7 @@ public class Atoms : MonoBehaviour
         bonds_selected_[0] = null;
         bonds_selected_[1] = null;
 
-        SELECTION_MODE_SPHERE_RADIUS = AtomicRadii.ball_and_stick_radius * 4.5f;
+        SELECTION_MODE_SPHERE_RADIUS = AtomicRadii.ball_and_stick_radius * 5.0f;
 
         info_ui_ = Camera.main.transform.Find("AtomInfoBox").GetComponent<AtomInfoBox>();
 
@@ -176,6 +186,14 @@ public class Atoms : MonoBehaviour
         residue_dictionary[resiude].Add(sphere);
     }
 
+    private void InsertToChainsDictionary(ISphere sphere) {
+        char chain = sphere.atom_.chain_id_;
+        if (!chains_dictionary.ContainsKey(chain)) {
+            chains_dictionary.Add(chain, new List<ISphere>());
+        }
+        chains_dictionary[chain].Add(sphere);
+    }
+
     public void VisualizationMethodButtonClick() {
         if (visualization_method_ == VisualizationMethod.BALL_AND_STICK) SetVisualizationMethod(VisualizationMethod.SPACE_FILLING);
         else SetVisualizationMethod(VisualizationMethod.BALL_AND_STICK);
@@ -188,22 +206,27 @@ public class Atoms : MonoBehaviour
         visualization_method_ = method;
 
         if (visualization_method_ == VisualizationMethod.BALL_AND_STICK) {
-            SELECTION_MODE_SPHERE_RADIUS = AtomicRadii.ball_and_stick_radius * 4.5f;
             transform.GetChild(0).gameObject.SetActive(true);
             foreach(ISphere s in ispheres_) {
                 s.SetRadius(AtomicRadii.ball_and_stick_radius);
             }
         } else {
-            SELECTION_MODE_SPHERE_RADIUS = 0.04f * 6.0f;
             transform.GetChild(0).gameObject.SetActive(false);
             foreach (ISphere s in ispheres_) {
                 s.SetAtomicRadius();
             }
         }
+    }
+
+    public void SelectionPlaneVisualizationMethodButtonClick() {
+        if (selection_visualization_ == SelectionPlane.VisualizationMethod.ARROWS) selection_visualization_ = SelectionPlane.VisualizationMethod.COLOR_CIRCLE;
+        else selection_visualization_ = SelectionPlane.VisualizationMethod.ARROWS;
+
         if (selection_plane_previous_ != null) {
             SelectionPlane plane = selection_plane_previous_.GetComponent<SelectionPlane>();
-            plane.ChangeRadius();
+            plane.ChangeVisualization();
         }
+
     }
 
     //void OnGUI()
@@ -233,9 +256,6 @@ public class Atoms : MonoBehaviour
                 Debug.DrawRay(Camera.main.transform.position, Camera.main.transform.forward * hit.distance, Color.white);
 
                 if (isphere != null) {
-                    if (Input.GetKeyDown(KeyCode.C) == true) {
-                        SetColor(isphere);
-                    }
                     if (Input.GetMouseButtonDown(0) == true) {
                         selected_atom_ = isphere;
                         state = STATE.SELECTED_ATOM;
@@ -245,9 +265,11 @@ public class Atoms : MonoBehaviour
                         return;
                     }
 
-                    if (isphere != previously_highlighted_atom_) {
-                        info_ui_.SetAtom(isphere);
-                        HighLight(isphere);
+                    info_ui_.SetAtom(isphere);
+                    if (!highlighted_spheres_.Contains(isphere)) {
+                        ClearHighlighted();
+                        if (exploring_state == ExploringMethod.EXPLORING_RESIDUES) HighLightResidue(isphere);
+                        else HighLightChain(isphere);
                     }
                 } else if (icylinder != null) {
                     ClearHighlighted();
@@ -333,24 +355,23 @@ public class Atoms : MonoBehaviour
                         atom_selected_id_++;
 
                         isphere.SetHighlighted(HighlightColors.HIGHLIGHT_COLOR.GREEN);
+                        highlighted_spheres_.Add(isphere);
 
                         if (atoms_selected_[0] != null && atoms_selected_[1] != null && atoms_selected_[2] != null && atoms_selected_[3] != null) {
 
-                            GameObject temp = Instantiate(prefab_torsion_angle, isphere.transform.position, Quaternion.identity);
+                            GameObject temp = Instantiate(prefab_torsion_angle, new Vector3(0,0,0), Quaternion.identity);
 
                             TorsionAngle tangle = temp.GetComponent<TorsionAngle>();
-                            tangle.pos4_ = atoms_selected_[atom_selected_id_ % 4].transform.position;
-                            tangle.pos3_ = atoms_selected_[(atom_selected_id_ + 1)% 4].transform.position;
-                            tangle.pos2_ = atoms_selected_[(atom_selected_id_ + 2)% 4].transform.position;
-                            tangle.pos1_ = atoms_selected_[(atom_selected_id_ + 3)% 4].transform.position;
+                            tangle.pos1_ = atoms_selected_[atom_selected_id_ % 4].transform.position;
+                            tangle.pos2_ = atoms_selected_[(atom_selected_id_ + 1)% 4].transform.position;
+                            tangle.pos3_ = atoms_selected_[(atom_selected_id_ + 2)% 4].transform.position;
+                            tangle.pos4_ = atoms_selected_[(atom_selected_id_ + 3)% 4].transform.position;
                         }
                     }
 
                 }
 
             }
-
-
 
         }
 
@@ -384,6 +405,7 @@ public class Atoms : MonoBehaviour
         selection_plane_previous_ = Instantiate(prefab_selection_plane_, selected_atom_.transform.position, Quaternion.identity);
         selection_plane_previous_.transform.parent = transform;
         SelectionPlane plane = selection_plane_previous_.GetComponent<SelectionPlane>();
+        plane.visualization = selection_visualization_;
         plane.center_sphere_ = selected_atom_;
 
         ClearHighlighted();
@@ -468,21 +490,22 @@ public class Atoms : MonoBehaviour
         }
     }
 
-    private void HighLight(ISphere isphere)
+    private void HighLightResidue(ISphere isphere)
     {
-        if (previously_highlighted_atom_ != null && previously_highlighted_atom_.atom_.res_seq_ != isphere.atom_.res_seq_)
-        {
-            ClearHighlighted();
-        }
+        ClearHighlighted();
 
-        isphere.SetHighlighted(HighlightColors.HIGHLIGHT_COLOR.WHITE);
-        highlighted_spheres_.Add(isphere);
         foreach (ISphere s in residue_dictionary[isphere.atom_.res_seq_])
         {
             s.SetHighlighted(HighlightColors.HIGHLIGHT_COLOR.WHITE);
             highlighted_spheres_.Add(s);
         }
-        previously_highlighted_atom_ = isphere;
+    }
+
+    private void HighLightChain(ISphere isphere) {
+        foreach (ISphere s in chains_dictionary[isphere.atom_.chain_id_]) {
+            s.SetHighlighted(HighlightColors.HIGHLIGHT_COLOR.WHITE);
+            highlighted_spheres_.Add(s);
+        }
     }
 
     private void ClearHighlighted()
@@ -492,7 +515,6 @@ public class Atoms : MonoBehaviour
             s.SetHighlighted(HighlightColors.HIGHLIGHT_COLOR.NO_HIGHLIGHT);
         }
         highlighted_spheres_.Clear();
-        previously_highlighted_atom_ = null;
 
         if (previously_highlighted_bond_ != null) previously_highlighted_bond_.SetHighlighted(HighlightColors.HIGHLIGHT_COLOR.NO_HIGHLIGHT);
         previously_highlighted_bond_ = null;

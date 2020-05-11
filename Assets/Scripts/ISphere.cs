@@ -82,7 +82,7 @@ public class ISphere : MonoBehaviour
 
         /* This is going to break instancing for that sphere */
         Material m = GetComponent<MeshRenderer>().material;
-        m.renderQueue = (int)queue;
+        m.renderQueue = (int)queue + 1;
     }
 
 }

@@ -20,7 +20,7 @@ public class IgnoreZText : MonoBehaviour
             Material updatedMaterial = new Material(existingGlobalMat);
             updatedMaterial.SetInt("unity_GUIZTestMode", (int)always_pass);
             text.material = updatedMaterial;
-            text.material.renderQueue = (int)RenderQueue.Transparent + 1;
+            text.material.renderQueue = (int)RenderQueue.Transparent + 2;
         }
         else {
             Text text = GetComponent<Text>();

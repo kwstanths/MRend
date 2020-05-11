@@ -100,5 +100,5 @@ MonoBehaviour:
     overrideState: 1
     value: 1
   thickness:
-    overrideState: 0
-    value: 3
+    overrideState: 1
+    value: 2

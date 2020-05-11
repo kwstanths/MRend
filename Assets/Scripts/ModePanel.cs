@@ -9,11 +9,13 @@ public class ModePanel : MonoBehaviour
     RectTransform canvas_transform_ = null;
 
     ButtonEvent button_visualization_;
+    ButtonEvent button_selecton_plane_visualization_;
 
     private void Awake() {
         canvas_ = GetComponentInChildren<Canvas>();
         canvas_transform_ = canvas_.GetComponent<RectTransform>();
         button_visualization_ = canvas_.transform.Find("ButtonVisualization").GetComponent<ButtonEvent>();
+        button_selecton_plane_visualization_ = canvas_.transform.Find("ButtonSelectionMode").GetComponent<ButtonEvent>();
     }
 
     void Update() {
@@ -34,6 +36,7 @@ public class ModePanel : MonoBehaviour
         }
 
         button_visualization_.RayCastHoverOff();
+        button_selecton_plane_visualization_.RayCastHoverOff();
     }
 
     public float GetHalfSizeX() {
