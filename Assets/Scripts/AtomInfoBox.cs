@@ -14,6 +14,10 @@ public class AtomInfoBox : MonoBehaviour
     Text text_chain_;
     Text text_occupancy_;
     Text text_temp_factor_;
+    Text text_torsion_1_;
+    Text text_torsion_2_;
+    Text text_torsion_3_;
+    Text text_torsion_4_;
 
     // Start is called before the first frame update
     void Start()
@@ -26,6 +30,10 @@ public class AtomInfoBox : MonoBehaviour
         text_temp_factor_ = canvas_.transform.Find("TempFactor").GetComponent<Text>();
         text_chain_ = canvas_.transform.Find("Chain").GetComponent<Text>();
 
+        text_torsion_1_ = canvas_.transform.Find("torsion_atom_1").GetComponent<Text>();
+        text_torsion_2_ = canvas_.transform.Find("torsion_atom_2").GetComponent<Text>();
+        text_torsion_3_ = canvas_.transform.Find("torsion_atom_3").GetComponent<Text>();
+        text_torsion_4_ = canvas_.transform.Find("torsion_atom_4").GetComponent<Text>();
 
         transform.rotation = Quaternion.LookRotation(Camera.main.transform.forward);
     }
@@ -69,5 +77,34 @@ public class AtomInfoBox : MonoBehaviour
     public void SetTempFactor(string text) {
         text_temp_factor_.text = "Temp. Factor: " + text;
     }
+    
+    public void SetTorsionAtom(int atom, string text) {
+        switch (atom) {
+            case 0:
+                text_torsion_1_.text = "1: " + text;
 
+                break;
+            case 1:
+                text_torsion_2_.text = "2: " + text;
+
+                break;
+            case 2:
+                text_torsion_3_.text = "3: " + text;
+
+                break;
+            case 3:
+                text_torsion_4_.text = "4: " + text;
+
+                break;
+            default:
+                break;
+        }
+    }
+
+    public void ClearTorsionAtoms() {
+        text_torsion_1_.text = "";
+        text_torsion_2_.text = "";
+        text_torsion_3_.text = "";
+        text_torsion_4_.text = "";
+    }
 }

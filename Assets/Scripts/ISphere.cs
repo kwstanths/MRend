@@ -16,6 +16,9 @@ public class ISphere : MonoBehaviour
     /* A reference to the material property block of that impostor sphere */
     private MaterialBlockSphere material_block_;
 
+    private bool fixed_color_ = false;
+    private Color fixed_color_value_;
+
     private void Start()
     {
         /* Init material property block, color and radius */
@@ -31,6 +34,22 @@ public class ISphere : MonoBehaviour
 
     public void SetColor(Color color) {
         material_block_.SetColor(color);
+    }
+
+    public void FixColor(Color color) {
+        fixed_color_ = true;
+        fixed_color_value_ = color;
+        material_block_.SetColor(color);
+    }
+
+    public void UnfixColor() {
+        fixed_color_ = false;
+    }
+
+    public void ResetColor() {
+        if (fixed_color_) material_block_.SetColor(fixed_color_value_);
+        else SetCPKColor();
+
     }
 
     public void SetHighlighted(HighlightColors.HIGHLIGHT_COLOR color)

@@ -4,11 +4,11 @@ using UnityEngine;
 
 public class AtomicRadii 
 {
-    /* In nanometers */
-    public static float ball_and_stick_radius = 0.04f;
+    /* In angstrom */
+    public static float ball_and_stick_radius = UnitConversion.TransformFromAngstrom(0.04f);
 
     /* */
-    public static float ball_and_stick_bond_radius = 0.014f;
+    public static float ball_and_stick_bond_radius = UnitConversion.TransformFromAngstrom(0.014f);
 
     /* A map that holds the covalent atomic radius for every element */
     public static Dictionary<string, float> radii_covalent = new Dictionary<string, float>(){
@@ -51,7 +51,7 @@ public class AtomicRadii
     {
         try
         {
-            return radii_covalent[element];
+            return UnitConversion.TransformFromAngstrom(radii_covalent[element]);
         }
         catch (System.Exception)
         {

@@ -16,6 +16,8 @@ public class ModePanel : MonoBehaviour
         canvas_transform_ = canvas_.GetComponent<RectTransform>();
         button_visualization_ = canvas_.transform.Find("ButtonVisualization").GetComponent<ButtonEvent>();
         button_selecton_plane_visualization_ = canvas_.transform.Find("ButtonSelectionMode").GetComponent<ButtonEvent>();
+
+        transform.localScale = UnitConversion.TransformFromAngstrom(transform.localScale);
     }
 
     void Update() {

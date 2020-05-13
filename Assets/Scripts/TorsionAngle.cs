@@ -17,9 +17,14 @@ public class TorsionAngle : MonoBehaviour
     private LineRenderer lr_;
     TorsionPlane plane1_;
 
+    /* Holds the previous transform matrix from local to world space */
+    Matrix4x4 local_to_world_;
+
     // Start is called before the first frame update
     void Start()
     {
+        local_to_world_ = transform.localToWorldMatrix;
+
         normal1_ = Vector3.Normalize(GetPlaneNormal(pos1_, pos2_, pos3_));
         normal2_ = Vector3.Normalize(GetPlaneNormal(pos2_, pos3_, pos4_));
         float angle = Mathf.Acos(Vector3.Dot(normal1_, normal2_));
@@ -43,6 +48,8 @@ public class TorsionAngle : MonoBehaviour
         lr_.endWidth = 0.003f;
 
         GameObject temp = Instantiate(prefab_arc, (pos2_ + pos3_) / 2, Quaternion.identity);
+        temp.transform.parent = transform;
+
         ArcRenderer arc = temp.GetComponent<ArcRenderer>();
 
         dir1_ = Vector3.Normalize(-Vector3.Cross(normal1_, Vector3.Normalize(pos2_ - pos3_)));
@@ -55,14 +62,17 @@ public class TorsionAngle : MonoBehaviour
     }
 
     private void Update() {
-        if (lr_.positionCount == 0) {
+        if (lr_.positionCount == 0 || local_to_world_ != transform.localToWorldMatrix) {
+            local_to_world_ = transform.localToWorldMatrix;
+
             Vector3 A, B;
             plane1_.GetAxisPoints(out A, out B);
 
             lr_.positionCount = 2;
-            Vector3[] points = new Vector3[] { A, B };
+            Vector3[] points = new Vector3[] { local_to_world_ * new Vector4(A.x, A.y, A.z, 1), local_to_world_ * new Vector4(B.x, B.y, B.z, 1) };
             lr_.SetPositions(points);
         }
+
     }
 
     Vector3 GetPlaneNormal(Vector3 t1, Vector3 t2, Vector3 t3) {

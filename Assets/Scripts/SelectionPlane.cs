@@ -120,6 +120,7 @@ public class SelectionPlane : MonoBehaviour
         CalculateInverseTransform();
 
         center_sphere_.SetHighlighted(HighlightColors.HIGHLIGHT_COLOR.GREEN);
+        center_sphere_.SetCPKColor();
 
         /* Calculate positions and reset colors and highlighting */
         plane_positions_ = new List<Vector3>(spheres_.Count);
@@ -195,7 +196,7 @@ public class SelectionPlane : MonoBehaviour
         for (int i = 0; i < spheres_.Count; i++) {
             ISphere sphere = spheres_[i];
             sphere.SetHighlighted(0);
-            sphere.SetCPKColor();
+            sphere.ResetColor();
         }
         spheres_.Clear();
 
@@ -212,10 +213,10 @@ public class SelectionPlane : MonoBehaviour
     private void MoveSelectionToSphere(ISphere s) {
         /* Set new position */
         transform.position = s.transform.position;
-        s.SetCPKColor();
+        s.ResetColor();
 
         /* Clear spheres */
-        ClearHighlightedAndSetCPKColor();
+        ClearHighlightedAndResetColor();
         spheres_.Clear();
 
         center_sphere_ = s;
@@ -233,14 +234,14 @@ public class SelectionPlane : MonoBehaviour
 
     private int GetDirectionInput() {
         int sphere_index = -1;
-        if (Input.GetKey(KeyCode.RightArrow)) sphere_index = array_[2, 1];
-        if (Input.GetKey(KeyCode.LeftArrow)) sphere_index = array_[0, 1];
-        if (Input.GetKey(KeyCode.DownArrow)) sphere_index = array_[1, 0];
-        if (Input.GetKey(KeyCode.UpArrow)) sphere_index = array_[1, 2];
-        if (Input.GetKey(KeyCode.RightArrow) && Input.GetKey(KeyCode.UpArrow)) sphere_index = array_[2, 2];
-        if (Input.GetKey(KeyCode.LeftArrow) && Input.GetKey(KeyCode.DownArrow)) sphere_index = array_[0, 0];
-        if (Input.GetKey(KeyCode.DownArrow) && Input.GetKey(KeyCode.RightArrow)) sphere_index = array_[2, 0];
-        if (Input.GetKey(KeyCode.UpArrow) && Input.GetKey(KeyCode.LeftArrow)) sphere_index = array_[0, 2];
+        if (Input.GetKey(KeyCode.RightArrow) || Input.GetKey(KeyCode.D)) sphere_index = array_[2, 1];
+        if (Input.GetKey(KeyCode.LeftArrow) || Input.GetKey(KeyCode.A)) sphere_index = array_[0, 1];
+        if (Input.GetKey(KeyCode.DownArrow) || Input.GetKey(KeyCode.S)) sphere_index = array_[1, 0];
+        if (Input.GetKey(KeyCode.UpArrow) || Input.GetKey(KeyCode.W)) sphere_index = array_[1, 2];
+        if ((Input.GetKey(KeyCode.RightArrow) || Input.GetKey(KeyCode.D)) && (Input.GetKey(KeyCode.UpArrow) || Input.GetKey(KeyCode.W))) sphere_index = array_[2, 2];
+        if ((Input.GetKey(KeyCode.LeftArrow) || Input.GetKey(KeyCode.A)) && (Input.GetKey(KeyCode.DownArrow) || Input.GetKey(KeyCode.S))) sphere_index = array_[0, 0];
+        if ((Input.GetKey(KeyCode.DownArrow) || Input.GetKey(KeyCode.S)) && (Input.GetKey(KeyCode.RightArrow) || Input.GetKey(KeyCode.D))) sphere_index = array_[2, 0];
+        if ((Input.GetKey(KeyCode.UpArrow) || Input.GetKey(KeyCode.W)) && (Input.GetKey(KeyCode.LeftArrow) || Input.GetKey(KeyCode.A))) sphere_index = array_[0, 2];
         return sphere_index;
     }
 
@@ -310,7 +311,7 @@ public class SelectionPlane : MonoBehaviour
     }
 
     private void OnDestroy() {
-        ClearHighlightedAndSetCPKColor();
+        ClearHighlightedAndResetColor();
         for (int i = 0; i < 3; i++) {
             for (int j = 0; j < 3; j++) {
                 if (i != 1 || j != 1) {
@@ -320,13 +321,13 @@ public class SelectionPlane : MonoBehaviour
         }
     }
 
-    private void ClearHighlightedAndSetCPKColor() {
+    private void ClearHighlightedAndResetColor() {
         foreach (ISphere s in spheres_) {
             s.SetHighlighted(HighlightColors.HIGHLIGHT_COLOR.NO_HIGHLIGHT);
-            s.SetCPKColor();
+            s.ResetColor();
         }
         center_sphere_.SetHighlighted(HighlightColors.HIGHLIGHT_COLOR.NO_HIGHLIGHT);
-        center_sphere_.SetCPKColor();
+        center_sphere_.ResetColor();
     }
 
     public void AddSphere(ISphere s) {
