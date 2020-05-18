@@ -5,10 +5,10 @@ using UnityEngine;
 public class AtomicRadii 
 {
     /* In angstrom */
-    public static float ball_and_stick_radius = UnitConversion.TransformFromAngstrom(0.04f);
+    public static float ball_and_stick_radius = 0.04f;
 
-    /* */
-    public static float ball_and_stick_bond_radius = UnitConversion.TransformFromAngstrom(0.014f);
+    /* In angstrom */
+    public static float ball_and_stick_bond_radius = 0.014f;
 
     /* A map that holds the covalent atomic radius for every element */
     public static Dictionary<string, float> radii_covalent = new Dictionary<string, float>(){
@@ -16,9 +16,9 @@ public class AtomicRadii
         {"LI", 0.145f },
         {"BE", 0.105f },
         {"B",  0.105f },
-        {"C",  0.07f },
+        {"C",  0.076f },
         {"N",  0.065f },
-        {"O",  0.06f },
+        {"O",  0.066f },
         {"F",  0.05f },
 
         {"MG", 0.150f },
@@ -35,6 +35,7 @@ public class AtomicRadii
         {"D",  0.025f },
     };
 
+    /* A map that holds the van der walls atomic radius for every element */
     public static Dictionary<string, float> radii_vanderwaals = new Dictionary<string, float>(){
         {"H",  0.110f },
         {"LI", 0.182f },
@@ -47,6 +48,7 @@ public class AtomicRadii
         {"FE", 0.240f },
     };
 
+    /* Get the covalent radius of an element */
     public static float GetCovalentRadius(string element)
     {
         try

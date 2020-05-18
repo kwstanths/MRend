@@ -22,6 +22,7 @@ public class SelectionPlane : MonoBehaviour
     }
     public VisualizationMethod visualization = VisualizationMethod.ARROWS;
 
+    /* The currently selected sphere */
     public ISphere center_sphere_;
 
     /* Holds the transform matrix for the local coordinate system of this selection plane. 
@@ -35,16 +36,15 @@ public class SelectionPlane : MonoBehaviour
     /* Holds the positions of the above spheres into the local coordinate system defined by the above ITM */
     List<Vector3> plane_positions_;
 
-    /* A 3x3 array that will store sphere indices that point to spheres_ array, that 
-     * will be used to store the closest selection
+    /* A 3x3 array corresponding to the eight 2D directions, that will store sphere indices that point to the 
+     * spheres_ array, that will be used to store the closest selection, and the correponsing color 
+     * and arrow object
      */
     int[,] array_;
     Color[,] colors_;
     GameObject[,] arrows_;
 
-    float drag_x_ = 0;
-    float drag_y_ = 0;
-
+    /* The color of the color circle */
     Color color_top = new Color(0.4f, 0.69f, 1);
     Color color_top_right = new Color(1, 0.6f, 1);
     Color color_right = new Color(0.4f, 0.4f, 0);
@@ -54,7 +54,11 @@ public class SelectionPlane : MonoBehaviour
     Color color_left = new Color(0.4f, 0.2f, 0);
     Color color_top_left = new Color(0.2f, 0.4f, 0);
 
+    /* The info box */
     AtomInfoBox info_ui_;
+
+    /* The parent Atoms object */
+    Atoms atoms_object_;
 
     void Start() {
         /* Set the scale based on the selection radius used */
@@ -87,7 +91,6 @@ public class SelectionPlane : MonoBehaviour
         arrows_[2, 0] = Instantiate(prefab_arrow_top_left, new Vector3(0, 0, 0), Quaternion.identity);
         arrows_[2, 1] = Instantiate(prefab_arrow_top, new Vector3(0, 0, 0), Quaternion.identity);
         arrows_[2, 2] = Instantiate(prefab_arrow_top_right, new Vector3(0, 0, 0), Quaternion.identity);
-        
         arrows_[0, 0].transform.parent = transform;
         arrows_[0, 1].transform.parent = transform;
         arrows_[0, 2].transform.parent = transform;
@@ -96,7 +99,6 @@ public class SelectionPlane : MonoBehaviour
         arrows_[2, 0].transform.parent = transform;
         arrows_[2, 1].transform.parent = transform;
         arrows_[2, 2].transform.parent = transform;
-
         arrows_[0, 0].SetActive(false);
         arrows_[0, 1].SetActive(false);
         arrows_[0, 2].SetActive(false);
@@ -114,15 +116,20 @@ public class SelectionPlane : MonoBehaviour
 
         /* Get info box object */
         info_ui_ = Camera.main.transform.Find("AtomInfoBox").GetComponent<AtomInfoBox>();
+
+        /* Get parent atoms object */
+        atoms_object_ = transform.parent.GetComponent<Atoms>();
     }
 
     void Update() {
+        /* Calculate the coordiinate system transformation matrix */
         CalculateInverseTransform();
 
+        /* highlight and color center sphere */
         center_sphere_.SetHighlighted(HighlightColors.HIGHLIGHT_COLOR.GREEN);
         center_sphere_.SetCPKColor();
 
-        /* Calculate positions and reset colors and highlighting */
+        /* Calculate positions and reset colors and highlighting for spheres within the radius */
         plane_positions_ = new List<Vector3>(spheres_.Count);
         for (int i = 0; i < spheres_.Count; i++) {
             ISphere s = spheres_[i];
@@ -133,22 +140,34 @@ public class SelectionPlane : MonoBehaviour
             s.SetCPKColor();
         }
 
+        /* Calculate spheres available for selection and their directions */
         FillArray();
 
-        /* Highlight the spheres that can be navigated to */
+        /* Highlight the spheres that can be navigated to, set the arrow directions based on the visualization used, or set the colors */
         for (int i = 0; i < 3; i++) {
             for (int j = 0; j < 3; j++) {
                 int s = array_[i, j];
+                /* If no sphere mapped in this direction, skip */
                 if (s == -1) continue;
                 spheres_[s].SetHighlighted(HighlightColors.HIGHLIGHT_COLOR.WHITE);
 
                 if (visualization == VisualizationMethod.COLOR_CIRCLE) {
                     spheres_[s].SetColor(colors_[j, i]);
                 } else {
+                    /* If arrows navigation used, calculate atomic radius used based on the atoms viusalization method */
+                    float atom_radius;
+                    if (atoms_object_.GetVisualizationMethod() == Atoms.VisualizationMethod.BALL_AND_STICK) {
+                        atom_radius = AtomicRadii.ball_and_stick_radius;
+                    } else {
+                        atom_radius = AtomicRadii.GetCovalentRadius(spheres_[s].atom_.element_);
+                    }
+                    
+                    /* and set the arrow objects in front of the atom */
                     arrows_[j, i].SetActive(true);
                     arrows_[j, i].transform.position = spheres_[s].transform.position +
-                        Vector3.Normalize(Camera.main.transform.position - spheres_[s].transform.position) * 2.0f * AtomicRadii.ball_and_stick_radius;
+                        Vector3.Normalize(Camera.main.transform.position - spheres_[s].transform.position) * 1.2f * atom_radius;
 
+                    /* make arrows face the camera */
                     arrows_[j, i].transform.rotation = Quaternion.LookRotation(arrows_[j, i].transform.position - Camera.main.transform.position, Camera.main.transform.up);
                 }
             }
@@ -163,6 +182,7 @@ public class SelectionPlane : MonoBehaviour
             if (Input.GetMouseButtonDown(0)) {
                 MoveSelectionToSphere(s);
             } else {
+                /* Make input selected sphere white */
                 s.SetColor(Color.white);
             }
         }
@@ -170,6 +190,7 @@ public class SelectionPlane : MonoBehaviour
 
     public void ChangeVisualization() {
         if (visualization == VisualizationMethod.ARROWS) {
+            /* If it was arrows, change to color circle */
             for (int i = 0; i < 3; i++) {
                 for (int j = 0; j < 3; j++) {
                     if (i != 1 || j != 1) {
@@ -178,6 +199,7 @@ public class SelectionPlane : MonoBehaviour
                 }
             }
             visualization = VisualizationMethod.COLOR_CIRCLE;
+            /* Make color circle object active */
             transform.GetChild(0).gameObject.SetActive(true);
         } else {
             visualization = VisualizationMethod.ARROWS;
@@ -185,14 +207,15 @@ public class SelectionPlane : MonoBehaviour
         }
     }
 
+    /* Change selection radius */
     public void ChangeRadius() {
         transform.localScale = 2 * new Vector3(Atoms.SELECTION_MODE_SPHERE_RADIUS, Atoms.SELECTION_MODE_SPHERE_RADIUS, Atoms.SELECTION_MODE_SPHERE_RADIUS);
-        
-        /* Make the sphere transparent */
+
+        /* Set radius of the transparent sphere */
         ISphere s = GetComponent<ISphere>();
         s.SetRadius(Atoms.SELECTION_MODE_SPHERE_RADIUS);
 
-        /* Clear spheres */
+        /* Reset spheres within the previous radius */
         for (int i = 0; i < spheres_.Count; i++) {
             ISphere sphere = spheres_[i];
             sphere.SetHighlighted(0);
@@ -215,10 +238,11 @@ public class SelectionPlane : MonoBehaviour
         transform.position = s.transform.position;
         s.ResetColor();
 
-        /* Clear spheres */
+        /* Clear spheres object */
         ClearHighlightedAndResetColor();
         spheres_.Clear();
 
+        /* Set info displayed */
         center_sphere_ = s;
         info_ui_.SetAtom(s);
 
@@ -232,6 +256,7 @@ public class SelectionPlane : MonoBehaviour
         }
     }
 
+    /* Get the 2D direction input */
     private int GetDirectionInput() {
         int sphere_index = -1;
         if (Input.GetKey(KeyCode.RightArrow) || Input.GetKey(KeyCode.D)) sphere_index = array_[2, 1];
@@ -247,6 +272,7 @@ public class SelectionPlane : MonoBehaviour
 
     /* Fills the 3x3 array with the closest spheres */
     private void FillArray() {
+        /* Reset the array and deactivate all arrow objects */
         array_ = new int[3, 3];
         for (int i = 0; i < 3; i++) {
             for (int j = 0; j < 3; j++) {
@@ -257,19 +283,19 @@ public class SelectionPlane : MonoBehaviour
             }
         }
 
-        /* Calculate the array position based on the angle defined by the local x,y coordinates */
+        /* Calculate the array position based on the angle defined by the local coordiante system x,y coordinates */
         for (int s = 0; s < spheres_.Count; s++) {
             int i = -1, j = -1;
             float local_xy_angle = Mathf.Atan2(plane_positions_[s].y, plane_positions_[s].x);
             GetArrayIndex(out i, out j, local_xy_angle);
 
-            /* If array slot is empty, or this one is closer, then store its index */
+            /* If the array slot is empty, or this one is closer, then store its index */
             if (array_[i, j] == -1) array_[i, j] = s;
             else if (plane_positions_[s].magnitude < plane_positions_[array_[i, j]].magnitude) array_[i, j] = s;
         }
     }
 
-    /* Given a angle in radians (-pi, pi] find the array index */
+    /* Given an angle in radians (-pi, pi] find the array index that it corresponds to in the 3x3 array */
     private void GetArrayIndex(out int i, out int j, float local_xy_angle) {
         if (local_xy_angle >= -0.3926 && local_xy_angle < 0.3926) {
             /* Right */

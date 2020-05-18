@@ -18,6 +18,8 @@ public class ArcRenderer : MonoBehaviour
     */
     public Vector3 X_;
     public Vector3 W_;
+    private Vector3 middle_arc_point_;
+
     public float Radius_;
     /* Number of points connected with a line to use to draw the angle */
     public int resolution_ = 30;
@@ -57,9 +59,8 @@ public class ArcRenderer : MonoBehaviour
 
         /* Calculate the position of the text using the direction vectors and the radius */
         /* Multiply by a factor to extend the text a bit outside of the angle */
-        Vector3 text_pos = 1.2f * (X_ * Radius_ + W_ * Radius_);
+        Vector3 text_pos = (Vector3.Normalize(middle_arc_point_) * Radius_ * 1.8f);
         temp.GetComponent<RectTransform>().localPosition = text_pos;
-
     }
 
     private void Update() {
@@ -84,12 +85,14 @@ public class ArcRenderer : MonoBehaviour
         local_points_ = new Vector3[resolution_ + 1];
         Vector3[] world_points = new Vector3[resolution_ + 1];
 
+        /* Compute perpendicular vector */
         Vector3 Z_ = -Vector3.Normalize(Vector3.Cross(X_, W_));
         Vector3 Y_ = -Vector3.Normalize(Vector3.Cross(Z_, X_));
 
         float angle = Mathf.Acos(Vector3.Dot(X_, W_));
         angle_deg_ = angle * Mathf.Rad2Deg;
 
+        /* Calculate points */
         for (int i = 0; i <= resolution_; i++) {
             float t = (float) i / (float) resolution_;
             float phi = t * angle;
@@ -97,6 +100,8 @@ public class ArcRenderer : MonoBehaviour
             local_points_[i] = P;
             world_points[i] = TransformToWorld(P);
         }
+        middle_arc_point_ = Radius_ * Mathf.Cos(0.5f * angle) * X_ + Radius_ * Mathf.Sin(0.5f * angle) * Y_;
+
         return world_points;
     }
 

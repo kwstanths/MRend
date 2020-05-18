@@ -57,7 +57,7 @@ public class TorsionAngle : MonoBehaviour
 
         arc.X_ = dir1_;
         arc.W_ = dir2_;
-        arc.Radius_ = 0.065f;
+        arc.Radius_ = 0.055f;
         arc.angle_positive_ = sign > 0;
     }
 

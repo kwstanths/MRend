@@ -28,8 +28,8 @@ public class TorsionPlane : MonoBehaviour
         Vector3 perp = pos3_ - point;
         y_axis_ = Vector3.Normalize(perp);
 
-        PC_ = PB_ + perp + (vertical_addition_ / 2) * perp;
-        PD_ = PA_ + perp + (vertical_addition_ / 2) * perp;
+        PC_ = PB_ + perp + vertical_addition_ * perp;
+        PD_ = PA_ + perp + vertical_addition_ * perp;
 
         FillMesh(PA_, PB_, PC_, PD_);
 

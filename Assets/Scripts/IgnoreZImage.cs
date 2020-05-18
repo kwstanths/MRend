@@ -17,7 +17,7 @@ public class IgnoreZImage : MonoBehaviour
             Material updatedMaterial = new Material(existingGlobalMat);
             updatedMaterial.SetInt("unity_GUIZTestMode", (int)always_pass);
             image.material = updatedMaterial;
-            image.material.renderQueue = (int)RenderQueue.Transparent + 2;
+            image.material.renderQueue = (int)RenderQueue.Transparent + 3;
         } else {
             Image image = GetComponent<Image>();
             Material existingGlobalMat = image.materialForRendering;

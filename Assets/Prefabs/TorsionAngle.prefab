@@ -50,7 +50,7 @@ MonoBehaviour:
   pos2_: {x: 0, y: 0, z: 0}
   pos3_: {x: 0, y: 0, z: 0}
   pos4_: {x: 0, y: 0, z: 0}
-  prefab_arc: {fileID: 7382895729098438983, guid: d874e9b2e00e5374198245ac5ecaaed4,
+  prefab_arc: {fileID: 7382895729098438983, guid: 621f8f68bcaba404fbb3c45ebc4bbed8,
     type: 3}
 --- !u!120 &6664829126495230727
 LineRenderer:
@@ -197,7 +197,7 @@ MonoBehaviour:
   pos2_: {x: 0, y: 0, z: 0}
   pos3_: {x: 0, y: 0, z: 0}
   horizontal_addition_: 0.2
-  vertical_addition_: 0.2
+  vertical_addition_: 0.1
 --- !u!23 &4485269251558881558
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -285,7 +285,7 @@ MonoBehaviour:
   pos2_: {x: 0, y: 0, z: 0}
   pos3_: {x: 0, y: 0, z: 0}
   horizontal_addition_: 0.2
-  vertical_addition_: 0.2
+  vertical_addition_: 0.1
 --- !u!23 &7167463632724754970
 MeshRenderer:
   m_ObjectHideFlags: 0

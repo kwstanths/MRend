@@ -18,6 +18,6 @@ public class AngleText : MonoBehaviour
     void Update()
     {
         /* Make the text always face the camera */
-        transform.LookAt(Camera.main.transform);
+        transform.rotation = Quaternion.LookRotation(transform.position - Camera.main.transform.position, Camera.main.transform.up);
     }
 }
