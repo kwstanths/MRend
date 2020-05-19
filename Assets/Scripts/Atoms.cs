@@ -92,7 +92,8 @@ public class Atoms : MonoBehaviour
 
         foreach (Atom atom in atoms)
         {
-            Vector3 atom_position = UnitConversion.TransformFromAngstrom(new Vector3(atom.x_, atom.y_, atom.z_));
+            /* Units in Nano meters */
+            Vector3 atom_position = new Vector3(atom.x_, atom.y_, atom.z_);
             atoms_bounding_box.Encapsulate(atom_position);
 
             /* Instantiate the object */
@@ -163,10 +164,9 @@ public class Atoms : MonoBehaviour
         bonds_selected_[1] = null;
 
         SELECTION_MODE_SPHERE_RADIUS = AtomicRadii.ball_and_stick_radius * 5.0f;
+        transform.GetChild(1).GetComponent<ModePanel>().SetRadius(SELECTION_MODE_SPHERE_RADIUS);
 
         info_ui_ = Camera.main.transform.Find("AtomInfoBox").GetComponent<AtomInfoBox>();
-
-        //transform.GetChild(1).GetComponent<ModePanel>().SetState(state);
 
         Debug.Log("Spawned: " + bonds + " bonds");
     }
@@ -279,6 +279,23 @@ public class Atoms : MonoBehaviour
         transform.GetChild(1).GetComponent<ModePanel>().SetState(state);
     }
 
+    public void IncreaseSelectionSphereRadius() {
+        Atoms.SELECTION_MODE_SPHERE_RADIUS += 0.02f;
+        if (selection_plane_previous_ != null) {
+            SelectionPlane plane = selection_plane_previous_.GetComponent<SelectionPlane>();
+            plane.ChangeRadius();
+        }
+        transform.GetChild(1).GetComponent<ModePanel>().SetRadius(SELECTION_MODE_SPHERE_RADIUS);
+    }
+    public void DecreaseSelectionSphereRadius() {
+        Atoms.SELECTION_MODE_SPHERE_RADIUS -= 0.02f;
+        if (selection_plane_previous_ != null) {
+            SelectionPlane plane = selection_plane_previous_.GetComponent<SelectionPlane>();
+            plane.ChangeRadius();
+        }
+        transform.GetChild(1).GetComponent<ModePanel>().SetRadius(SELECTION_MODE_SPHERE_RADIUS);
+    }
+
     private void ResetState() {
         switch (state) {
             case STATE.EXPLORING_ATOMS:
@@ -339,6 +356,7 @@ public class Atoms : MonoBehaviour
     //Update is called once per frame
     void Update()
     {
+
         if (Input.GetKey(KeyCode.Space)) {
             bool ui_hit = RayCastUIlayer();
             if (ui_hit) return;

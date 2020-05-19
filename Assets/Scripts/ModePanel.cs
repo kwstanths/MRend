@@ -17,6 +17,10 @@ public class ModePanel : MonoBehaviour
     ButtonEventOnOff button_bond_angles_mode_;
     ButtonEventOnOff button_torsion_angles_mode_;
 
+    Text text_radius_;
+    ButtonEventSimple button_radius_up_;
+    ButtonEventSimple button_radius_down_;
+
     private void Awake() {
         canvas_ = GetComponentInChildren<Canvas>();
         canvas_transform_ = canvas_.GetComponent<RectTransform>();
@@ -30,11 +34,17 @@ public class ModePanel : MonoBehaviour
         button_bond_angles_mode_ = canvas_.transform.Find("ButtonBondAngles").GetComponent<ButtonEventOnOff>();
         button_torsion_angles_mode_ = canvas_.transform.Find("ButtonTorsionAngles").GetComponent<ButtonEventOnOff>();
 
+        button_radius_up_ = canvas_.transform.Find("button_radius_up").GetComponent<ButtonEventSimple>();
+        button_radius_down_ = canvas_.transform.Find("button_radius_down").GetComponent<ButtonEventSimple>();
+        text_radius_ = canvas_.transform.Find("navigation_radius").GetComponent<Text>();
+
         transform.localScale = UnitConversion.TransformFromAngstrom(transform.localScale);
     }
 
     void Update() {
-        transform.rotation = Quaternion.LookRotation(transform.position - Camera.main.transform.position);
+        Vector3 look_direction = transform.position - Camera.main.transform.position;
+        look_direction.y = 0;
+        transform.rotation = Quaternion.LookRotation(look_direction);
 
         //float distance_to_camera = Vector3.Distance(transform.position, Camera.main.transform.position);
         //transform.localScale = new Vector3(0.2f, 0.2f, 0.2f) + new Vector3(distance_to_camera, distance_to_camera, distance_to_camera) * 0.35f;
@@ -58,6 +68,8 @@ public class ModePanel : MonoBehaviour
         button_atom_distances_mode_.RayCastHoverOff();
         button_bond_angles_mode_.RayCastHoverOff();
         button_torsion_angles_mode_.RayCastHoverOff();
+        button_radius_up_.RayCastHoverOff();
+        button_radius_down_.RayCastHoverOff();
     }
 
     public void SetState(Atoms.STATE state) {
@@ -89,6 +101,10 @@ public class ModePanel : MonoBehaviour
             default:
                 break;
         }
+    }
+
+    public void SetRadius(float radius) {
+        text_radius_.text = radius.ToString("F2");
     }
 
     public float GetHalfSizeX() {

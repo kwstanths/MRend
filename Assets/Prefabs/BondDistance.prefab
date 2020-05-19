@@ -162,6 +162,7 @@ GameObject:
   - component: {fileID: 8578581220684455257}
   - component: {fileID: 3413486956671638220}
   - component: {fileID: 8818106594459036994}
+  - component: {fileID: 2015068934545305146}
   m_Layer: 0
   m_Name: TextDistance
   m_TagString: Untagged
@@ -262,3 +263,17 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   angle_degrees_: 0
+--- !u!114 &2015068934545305146
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8648995571923026704}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5c34a9d6de418614db26ac861ff19a6c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  transparent_queue_addition_: 2
+  do_z_test_: 0
