@@ -162,7 +162,7 @@ GameObject:
   - component: {fileID: 8578581220684455257}
   - component: {fileID: 3413486956671638220}
   - component: {fileID: 8818106594459036994}
-  - component: {fileID: 2015068934545305146}
+  - component: {fileID: 116569230274890910}
   m_Layer: 0
   m_Name: TextDistance
   m_TagString: Untagged
@@ -263,7 +263,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   angle_degrees_: 0
---- !u!114 &2015068934545305146
+--- !u!114 &116569230274890910
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}

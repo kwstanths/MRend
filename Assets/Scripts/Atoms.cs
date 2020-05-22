@@ -54,7 +54,6 @@ public class Atoms : MonoBehaviour
     /* Atom distance parameters */
     [SerializeField] GameObject prefab_atom_distance_ = null;
     GameObject atom_distance_previous_;
-    bool atom_distance_spawned_ = false;
 
     /* Bond angle parameters */
     [SerializeField] GameObject prefab_arc_ = null;
@@ -63,11 +62,16 @@ public class Atoms : MonoBehaviour
     int bonds_selected_id_ = 0;
     GameObject arc_previous_ = null;
     
-    /* Selected atom paramters */
+    /* Selected atom and bond paramters */
+    [SerializeField] GameObject prefab_marked_atom_ = null;
+    GameObject marked_atom_object_ = null;
+
     private ISphere selected_atom_ = null;
-    [SerializeField] GameObject prefab_selection_plane_ = null;
+    private ICylinder selected_bond_ = null;
+    [SerializeField] GameObject prefab_selection_plane_spheres_ = null;
+    [SerializeField] GameObject prefab_selection_plane_cylinders_ = null;
     GameObject selection_plane_previous_ = null;
-    SelectionPlane.VisualizationMethod selection_visualization_ = SelectionPlane.VisualizationMethod.ARROWS;
+    SelectionVisualizationMethod selection_visualization_ = SelectionVisualizationMethod.ARROWS;
 
     /* Torsion angle paramters */
     ISphere[] atoms_selected_ = new ISphere[4];
@@ -140,7 +144,7 @@ public class Atoms : MonoBehaviour
                     float b_covalent_radius = AtomicRadii.radii_covalent[b.atom_.element_];
 
                     float distance = Vector3.Distance(a_position, b_position);
-                    if (distance <= a_covalent_radius + b_covalent_radius + 0.016)
+                    if (distance <= a_covalent_radius + b_covalent_radius + 0.015)
                     {
                         bonds++;
                         GameObject temp = Instantiate(prefab_bond, a_position, Quaternion.identity);
@@ -240,12 +244,14 @@ public class Atoms : MonoBehaviour
         else SetVisualizationMethod(VisualizationMethod.BALL_AND_STICK);
     }
     public void ChangeSelectionPlaneVisualizationMethod() {
-        if (selection_visualization_ == SelectionPlane.VisualizationMethod.ARROWS) selection_visualization_ = SelectionPlane.VisualizationMethod.COLOR_CIRCLE;
-        else selection_visualization_ = SelectionPlane.VisualizationMethod.ARROWS;
+        if (selection_visualization_ == SelectionVisualizationMethod.ARROWS) selection_visualization_ = SelectionVisualizationMethod.COLOR_CIRCLE;
+        else selection_visualization_ = SelectionVisualizationMethod.ARROWS;
 
         if (selection_plane_previous_ != null) {
-            SelectionPlane plane = selection_plane_previous_.GetComponent<SelectionPlane>();
-            plane.ChangeVisualization();
+            SelectionPlaneSpheres planes = selection_plane_previous_.GetComponent<SelectionPlaneSpheres>();
+            SelectionPlaneCylinders planec = selection_plane_previous_.GetComponent<SelectionPlaneCylinders>();
+            if (planes != null) planes.ChangeVisualization();
+            if (planec != null) planec.ChangeVisualization();
         }
     }
     public void ChangeExploringMethod() {
@@ -282,21 +288,26 @@ public class Atoms : MonoBehaviour
     public void IncreaseSelectionSphereRadius() {
         Atoms.SELECTION_MODE_SPHERE_RADIUS += 0.02f;
         if (selection_plane_previous_ != null) {
-            SelectionPlane plane = selection_plane_previous_.GetComponent<SelectionPlane>();
-            plane.ChangeRadius();
+            SelectionPlaneSpheres planes = selection_plane_previous_.GetComponent<SelectionPlaneSpheres>();
+            SelectionPlaneCylinders planec = selection_plane_previous_.GetComponent<SelectionPlaneCylinders>();
+            if (planes != null) planes.ChangeRadius();
+            if (planec != null) planec.ChangeRadius();
         }
         transform.GetChild(1).GetComponent<ModePanel>().SetRadius(SELECTION_MODE_SPHERE_RADIUS);
     }
     public void DecreaseSelectionSphereRadius() {
         Atoms.SELECTION_MODE_SPHERE_RADIUS -= 0.02f;
         if (selection_plane_previous_ != null) {
-            SelectionPlane plane = selection_plane_previous_.GetComponent<SelectionPlane>();
-            plane.ChangeRadius();
+            SelectionPlaneSpheres planes = selection_plane_previous_.GetComponent<SelectionPlaneSpheres>();
+            SelectionPlaneCylinders planec = selection_plane_previous_.GetComponent<SelectionPlaneCylinders>();
+            if (planes != null) planes.ChangeRadius();
+            if (planec != null) planec.ChangeRadius();
         }
         transform.GetChild(1).GetComponent<ModePanel>().SetRadius(SELECTION_MODE_SPHERE_RADIUS);
     }
 
     private void ResetState() {
+        info_ui_.ResetInfo();
         switch (state) {
             case STATE.EXPLORING_ATOMS:
                 if (selection_plane_previous_ != null) Destroy(selection_plane_previous_);
@@ -311,16 +322,18 @@ public class Atoms : MonoBehaviour
                 atoms_selected_[2] = null;
                 atoms_selected_[3] = null;
                 atom_selected_id_ = 0;
-                atom_distance_spawned_ = false;
                 selected_atom_ = null;
 
                 break;
             case STATE.BOND_ANGLES:
+                if (selection_plane_previous_ != null) Destroy(selection_plane_previous_);
                 if (arc_previous_ != null) Destroy(arc_previous_);
                 if (bonds_selected_[0] != null) bonds_selected_[0].SetHighlighted(HighlightColors.HIGHLIGHT_COLOR.NO_HIGHLIGHT);
                 if (bonds_selected_[1] != null) bonds_selected_[1].SetHighlighted(HighlightColors.HIGHLIGHT_COLOR.NO_HIGHLIGHT);
                 bonds_selected_[0] = null;
                 bonds_selected_[1] = null;
+                bonds_selected_id_ = 0;
+                selected_bond_ = null;
 
                 break;
             case STATE.TORSION_ANGLE:
@@ -407,7 +420,7 @@ public class Atoms : MonoBehaviour
                 if (isphere != null) {
                     if (Input.GetMouseButtonDown(0) == true) {
                         selected_atom_ = isphere;
-                        SpawnSelectionPlane();
+                        SpawnSelectionPlaneSpheres();
                         return;
                     }
 
@@ -444,7 +457,7 @@ public class Atoms : MonoBehaviour
             }
 
             if (selected_atom_ != null) {
-                SelectionPlane plane = selection_plane_previous_.GetComponent<SelectionPlane>();
+                SelectionPlaneSpheres plane = selection_plane_previous_.GetComponent<SelectionPlaneSpheres>();
 
                 int current_index = atom_selected_id_ % 4;
                 ISphere previously_added = ((current_index == 0) ? atoms_selected_[3] : atoms_selected_[current_index - 1]);
@@ -453,6 +466,12 @@ public class Atoms : MonoBehaviour
 
                     atom_selected_id_++;
 
+                    if (marked_atom_object_ == null) {
+                        marked_atom_object_ = Instantiate(prefab_marked_atom_, plane.center_sphere_.transform.position + 1.5f * Vector3.up * AtomicRadii.ball_and_stick_radius, Quaternion.identity);
+                    } else {
+                        marked_atom_object_.transform.position = plane.center_sphere_.transform.position + 1.5f * Vector3.up * AtomicRadii.ball_and_stick_radius;
+                    }
+
                     if (previously_added != null) {
                         Vector3 middle = (previously_added.transform.position + plane.center_sphere_.transform.position) / 2;
 
@@ -460,6 +479,7 @@ public class Atoms : MonoBehaviour
                         if (atom_distance_previous_ != null) Destroy(atom_distance_previous_);
                         /* */
                         atom_distance_previous_ = Instantiate(prefab_atom_distance_, middle, Quaternion.identity);
+                        atom_distance_previous_.transform.parent = transform;
                         BondDistance temp = atom_distance_previous_.GetComponent<BondDistance>();
                         temp.atom1_ = previously_added;
                         temp.atom2_ = plane.center_sphere_;
@@ -468,13 +488,13 @@ public class Atoms : MonoBehaviour
                 return;
             }
 
-            if (ray_cast_hit && !atom_distance_spawned_) {
+            if (ray_cast_hit) {
                 ISphere isphere = hit.transform.GetComponent<ISphere>();
 
                 if (isphere != null) {
                     if (Input.GetMouseButtonDown(0) == true) {
                         selected_atom_ = isphere;
-                        SpawnSelectionPlane();
+                        SpawnSelectionPlaneSpheres();
                         return;
                     }
 
@@ -504,38 +524,41 @@ public class Atoms : MonoBehaviour
 
         } else if (state == STATE.BOND_ANGLES) {
 
+            if (Input.GetKeyDown(KeyCode.Escape)) {
+                ResetState();
+                return;
+            }
+
+            if (selected_bond_ != null) {
+                SelectionPlaneCylinders plane = selection_plane_previous_.GetComponent<SelectionPlaneCylinders>();
+
+                int current_index = bonds_selected_id_ % 2;
+                ICylinder previously_added = ((current_index == 0) ? bonds_selected_[1] : bonds_selected_[current_index - 1]);
+                if (previously_added != plane.center_cylinder_) {
+                    bonds_selected_[current_index] = plane.center_cylinder_;
+
+                    bonds_selected_id_++;
+
+                    if (previously_added != null) {
+                        if (arc_previous_ != null) Destroy(arc_previous_);
+                        SpawnArc(bonds_selected_[0], bonds_selected_[1]);
+                    }
+                }
+                return;
+            }
+
             if (ray_cast_hit) {
                 ClearHighlighted();
 
                 ICylinder icylinder = hit.transform.GetComponent<ICylinder>();
 
                 if (icylinder != null) {
-                    if (icylinder != bonds_selected_[0] && icylinder != bonds_selected_[1]) {
-                        icylinder.SetHighlighted(HighlightColors.HIGHLIGHT_COLOR.WHITE);
-                        previously_highlighted_bond_ = icylinder;
-                    }
+                    icylinder.SetHighlighted(HighlightColors.HIGHLIGHT_COLOR.WHITE);
+                    previously_highlighted_bond_ = icylinder;
 
                     if (Input.GetMouseButtonDown(0) == true) {
-                        previously_highlighted_bond_ = null;
-
-                        ICylinder previous = bonds_selected_[bonds_selected_id_ % 2];
-                        if (previous != null) {
-                            previous.SetHighlighted(HighlightColors.HIGHLIGHT_COLOR.NO_HIGHLIGHT);
-                        }
-
-                        icylinder.SetHighlighted(HighlightColors.HIGHLIGHT_COLOR.BLUE);
-                        bonds_selected_[bonds_selected_id_ % 2] = icylinder;
-
-                        bonds_selected_id_++;
-
-                        if (bonds_selected_[0] != null && bonds_selected_[1] != null && bonds_selected_[0] != bonds_selected_[1]) {
-                            if (arc_previous_ != null) {
-                                Destroy(arc_previous_);
-                            }
-
-                            SpawnArc(bonds_selected_[0], bonds_selected_[1]);
-
-                        }
+                        selected_bond_ = icylinder;
+                        SpawnSelectionPlaneCylinders();
                     }
 
                 }
@@ -543,7 +566,6 @@ public class Atoms : MonoBehaviour
             } else {
                 ClearHighlighted();
             }
-
 
         } else if (state == STATE.TORSION_ANGLE) {
 
@@ -560,7 +582,7 @@ public class Atoms : MonoBehaviour
             }
 
             if (selected_atom_ != null) {
-                SelectionPlane plane = selection_plane_previous_.GetComponent<SelectionPlane>();
+                SelectionPlaneSpheres plane = selection_plane_previous_.GetComponent<SelectionPlaneSpheres>();
 
                 ISphere previously_added = ((atom_selected_id_ == 0) ? atoms_selected_[3] : atoms_selected_[atom_selected_id_ - 1]);
                 if (Input.GetKeyDown(KeyCode.E) && atom_selected_id_ < 4 && previously_added != plane.center_sphere_) {
@@ -585,7 +607,7 @@ public class Atoms : MonoBehaviour
                 if (isphere != null) {
                     if (Input.GetMouseButtonDown(0) == true) {
                         selected_atom_ = isphere;
-                        SpawnSelectionPlane();
+                        SpawnSelectionPlaneSpheres();
                         return;
                     }
 
@@ -649,12 +671,12 @@ public class Atoms : MonoBehaviour
         }
     }
 
-    private void SpawnSelectionPlane() {
+    private void SpawnSelectionPlaneSpheres() {
         if (selection_plane_previous_ != null) Destroy(selection_plane_previous_);
 
-        selection_plane_previous_ = Instantiate(prefab_selection_plane_, selected_atom_.transform.position, Quaternion.identity);
+        selection_plane_previous_ = Instantiate(prefab_selection_plane_spheres_, selected_atom_.transform.position, Quaternion.identity);
         selection_plane_previous_.transform.parent = transform;
-        SelectionPlane plane = selection_plane_previous_.GetComponent<SelectionPlane>();
+        SelectionPlaneSpheres plane = selection_plane_previous_.GetComponent<SelectionPlaneSpheres>();
         plane.visualization = selection_visualization_;
         plane.center_sphere_ = selected_atom_;
 
@@ -668,13 +690,32 @@ public class Atoms : MonoBehaviour
         }
     }
 
+    private void SpawnSelectionPlaneCylinders() {
+        if (selection_plane_previous_ != null) Destroy(selection_plane_previous_);
+
+        selection_plane_previous_ = Instantiate(prefab_selection_plane_cylinders_, SelectionPlaneCylinders.CalculateCylinderMiddle(selected_bond_), Quaternion.identity);
+        selection_plane_previous_.transform.parent = transform;
+        SelectionPlaneCylinders plane = selection_plane_previous_.GetComponent<SelectionPlaneCylinders>();
+        plane.visualization = selection_visualization_;
+        plane.center_cylinder_ = selected_bond_;
+
+        ClearHighlighted();
+        Collider[] hitColliders = Physics.OverlapSphere(selected_bond_.transform.position, SELECTION_MODE_SPHERE_RADIUS);
+        foreach (Collider c in hitColliders) {
+            ICylinder s = c.gameObject.GetComponent<ICylinder>();
+            if (s == null || s == selected_bond_) continue;
+
+            plane.AddCylinder(s);
+        }
+    }
+
     private void MoveTowardsSelectedAtom(float speed) {
         /* Calculate desired position of the selected sphere, just in front of the camera */
         Vector3 desired_position = Camera.main.transform.position + 2 * Camera.main.transform.forward * AtomicRadii.GetCovalentRadius(selected_atom_.atom_.element_);
         /* Calculate the movement speed */
         speed = speed * Vector3.Distance(selected_atom_.transform.position, desired_position);
 
-        SelectionPlane plane = selection_plane_previous_.GetComponent<SelectionPlane>();
+        SelectionPlaneSpheres plane = selection_plane_previous_.GetComponent<SelectionPlaneSpheres>();
         
         /* Change position */
         Vector3 movement_direction = Vector3.Normalize(plane.center_sphere_.transform.position - desired_position);

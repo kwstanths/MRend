@@ -20,7 +20,7 @@
 
             Cull Off
             Lighting Off
-            ZWrite Off
+            ZWrite On
             ZTest Always
             Blend One OneMinusSrcAlpha
 

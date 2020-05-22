@@ -12,6 +12,7 @@ public class ModePanel : MonoBehaviour
     ButtonEventToggle button_selecton_plane_visualization_;
     ButtonEventToggle button_exploring_method_;
 
+    Text text_mode_;
     ButtonEventOnOff button_exploring_mode_;
     ButtonEventOnOff button_atom_distances_mode_;
     ButtonEventOnOff button_bond_angles_mode_;
@@ -29,6 +30,7 @@ public class ModePanel : MonoBehaviour
         button_selecton_plane_visualization_ = canvas_.transform.Find("ButtonSelectionMode").GetComponent<ButtonEventToggle>();
         button_exploring_method_ = canvas_.transform.Find("ButtonExploringMethod").GetComponent<ButtonEventToggle>();
 
+        text_mode_ = canvas_.transform.Find("text_select_mode").GetComponent<Text>();
         button_exploring_mode_ = canvas_.transform.Find("ButtonExploreAtoms").GetComponent<ButtonEventOnOff>();
         button_atom_distances_mode_ = canvas_.transform.Find("ButtonAtomDistances").GetComponent<ButtonEventOnOff>();
         button_bond_angles_mode_ = canvas_.transform.Find("ButtonBondAngles").GetComponent<ButtonEventOnOff>();
@@ -78,25 +80,25 @@ public class ModePanel : MonoBehaviour
                 button_atom_distances_mode_.Unselect();
                 button_bond_angles_mode_.Unselect();
                 button_torsion_angles_mode_.Unselect();
-
+                text_mode_.text = "Select mode: Atom exploration";
                 break;
             case Atoms.STATE.ATOM_DISTANCES:
                 button_exploring_mode_.Unselect();
                 button_bond_angles_mode_.Unselect();
                 button_torsion_angles_mode_.Unselect();
-
+                text_mode_.text = "Select mode: Atom distances";
                 break;
             case Atoms.STATE.BOND_ANGLES:
                 button_exploring_mode_.Unselect();
                 button_atom_distances_mode_.Unselect();
                 button_torsion_angles_mode_.Unselect();
-
+                text_mode_.text = "Select mode: Bond angles";
                 break;
             case Atoms.STATE.TORSION_ANGLE:
                 button_exploring_mode_.Unselect();
                 button_atom_distances_mode_.Unselect();
                 button_bond_angles_mode_.Unselect();
-
+                text_mode_.text = "Select mode: Torsion angles";
                 break;
             default:
                 break;

@@ -9,7 +9,7 @@
        Lighting Off 
        Cull Off 
        ZWrite On 
-       ZTest[unity_GUIZTestMode]
+       ZTest [unity_GUIZTestMode]
        Fog { Mode Off }
        Blend SrcAlpha OneMinusSrcAlpha
        

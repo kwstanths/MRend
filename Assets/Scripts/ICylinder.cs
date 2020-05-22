@@ -33,6 +33,14 @@ public class ICylinder : MonoBehaviour
         SetHeight(height_);
     }
 
+    public void SetColor(Color color) {
+        material_block_.SetColor(color);
+    }
+
+    public void ResetColor() {
+        material_block_.SetColor(new Color(0.49f, 0, 0));
+    }
+
     public void SetRadius(float radius)
     {
         /* Set radius in material property block */

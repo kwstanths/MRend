@@ -77,7 +77,20 @@ public class AtomInfoBox : MonoBehaviour
     public void SetTempFactor(string text) {
         text_temp_factor_.text = "Temp. Factor: " + text;
     }
-    
+
+    public void ResetInfo() {
+        text_element_.text = "";
+        text_residue_.text = "";
+        text_atom_name_.text = "";
+        text_chain_.text = "Chain: ";
+        text_occupancy_.text = "Occupancy: ";
+        text_temp_factor_.text = "Temp. Factor: ";
+        text_torsion_1_.text = "1: ";
+        text_torsion_2_.text = "2: ";
+        text_torsion_3_.text = "3: ";
+        text_torsion_4_.text = "4: ";
+    }
+
     public void SetTorsionAtom(int atom, string text) {
         switch (atom) {
             case 0:

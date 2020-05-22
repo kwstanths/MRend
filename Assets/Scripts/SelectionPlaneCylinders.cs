@@ -3,8 +3,8 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-/* A script attached to an impsotor sphere that will implement a selection plane around this sphere */
-public class SelectionPlane : MonoBehaviour
+/* A script attached to an impsotor sphere that will implement a selection plane of cylinders around this cylinder */
+public class SelectionPlaneCylinders : MonoBehaviour
 {
     [SerializeField] GameObject prefab_arrow_top;
     [SerializeField] GameObject prefab_arrow_top_right;
@@ -15,15 +15,10 @@ public class SelectionPlane : MonoBehaviour
     [SerializeField] GameObject prefab_arrow_left;
     [SerializeField] GameObject prefab_arrow_top_left;
 
-    public enum VisualizationMethod
-    {
-        COLOR_CIRCLE,
-        ARROWS,
-    }
-    public VisualizationMethod visualization = VisualizationMethod.ARROWS;
+    public SelectionVisualizationMethod visualization = SelectionVisualizationMethod.ARROWS;
 
-    /* The currently selected sphere */
-    public ISphere center_sphere_;
+    /* The currently selected cylinder */
+    public ICylinder center_cylinder_;
 
     /* Holds the transform matrix for the local coordinate system of this selection plane. 
      * For more information look at function CalculateInverseTransform()
@@ -31,13 +26,13 @@ public class SelectionPlane : MonoBehaviour
     Matrix4x4 ITM_;
     Vector3 Vector_Right_;
 
-    /* Holds the spheres contained within this selection plane */
-    List<ISphere> spheres_ = new List<ISphere>();
-    /* Holds the positions of the above spheres into the local coordinate system defined by the above ITM */
+    /* Holds the cylinders contained within this selection plane */
+    List<ICylinder> cylinders_ = new List<ICylinder>();
+    /* Holds the positions of the above cylinders into the local coordinate system defined by the above ITM */
     List<Vector3> plane_positions_;
 
-    /* A 3x3 array corresponding to the eight 2D directions, that will store sphere indices that point to the 
-     * spheres_ array, that will be used to store the closest selection, and the correponsing color 
+    /* A 3x3 array corresponding to the eight 2D directions, that will store cylinder indices that point to the 
+     * cylinders_ array, that will be used to store the closest selection, and the correponsing color 
      * and arrow object
      */
     int[,] array_;
@@ -64,7 +59,7 @@ public class SelectionPlane : MonoBehaviour
         /* Set the scale based on the selection radius used */
         transform.localScale = 2 * new Vector3(Atoms.SELECTION_MODE_SPHERE_RADIUS, Atoms.SELECTION_MODE_SPHERE_RADIUS, Atoms.SELECTION_MODE_SPHERE_RADIUS);
 
-        /* Make the sphere transparent */
+        /* Make the selection sphere transparent */
         ISphere s = GetComponent<ISphere>();
         s.SetTransparent(true);
         s.SetRadius(Atoms.SELECTION_MODE_SPHERE_RADIUS);
@@ -108,7 +103,7 @@ public class SelectionPlane : MonoBehaviour
         arrows_[2, 1].SetActive(false);
         arrows_[2, 2].SetActive(false);
 
-        if (visualization == VisualizationMethod.ARROWS) {
+        if (visualization == SelectionVisualizationMethod.ARROWS) {
             transform.GetChild(0).gameObject.SetActive(false);
         } else {
             transform.GetChild(0).gameObject.SetActive(true);
@@ -121,51 +116,52 @@ public class SelectionPlane : MonoBehaviour
         atoms_object_ = transform.parent.GetComponent<Atoms>();
     }
 
+    public static Vector3 CalculateCylinderMiddle(ICylinder s) {
+        return s.transform.position + s.transform.up * s.height_ / 2;
+    }
+
     void Update() {
         /* Calculate the coordiinate system transformation matrix */
         CalculateInverseTransform();
 
-        /* highlight and color center sphere */
-        center_sphere_.SetHighlighted(HighlightColors.HIGHLIGHT_COLOR.GREEN);
-        center_sphere_.SetCPKColor();
+        /* highlight and color center cylinder */
+        center_cylinder_.SetHighlighted(HighlightColors.HIGHLIGHT_COLOR.GREEN);
+        center_cylinder_.ResetColor();
 
-        /* Calculate positions and reset colors and highlighting for spheres within the radius */
-        plane_positions_ = new List<Vector3>(spheres_.Count);
-        for (int i = 0; i < spheres_.Count; i++) {
-            ISphere s = spheres_[i];
-            Vector4 sphere_world_position = new Vector4(s.transform.position.x, s.transform.position.y, s.transform.position.z, 1);
-            Vector4 sphere_plane_position = ITM_ * sphere_world_position;
-            plane_positions_.Add(sphere_plane_position);
+        /* Calculate positions and reset colors and highlighting for cylinders within the radius */
+        plane_positions_ = new List<Vector3>(cylinders_.Count);
+        for (int i = 0; i < cylinders_.Count; i++) {
+            ICylinder s = cylinders_[i];
+            Vector3 cylinder_middle = CalculateCylinderMiddle(s);
+            Vector4 cylinder_world_position = new Vector4(cylinder_middle.x, cylinder_middle.y, cylinder_middle.z, 1);
+            Vector4 cylinder_plane_position = ITM_ * cylinder_world_position;
+            plane_positions_.Add(cylinder_plane_position);
             s.SetHighlighted(0);
-            s.SetCPKColor();
+            s.ResetColor();
         }
 
-        /* Calculate spheres available for selection and their directions */
+        /* Calculate cylinders available for selection and their directions */
         FillArray();
 
-        /* Highlight the spheres that can be navigated to, set the arrow directions based on the visualization used, or set the colors */
+        /* Highlight the cylinders that can be navigated to, set the arrow directions based on the visualization used, or set the colors */
         for (int i = 0; i < 3; i++) {
             for (int j = 0; j < 3; j++) {
                 int s = array_[i, j];
-                /* If no sphere mapped in this direction, skip */
+                /* If no cylinder mapped in this direction, skip */
                 if (s == -1) continue;
-                spheres_[s].SetHighlighted(HighlightColors.HIGHLIGHT_COLOR.WHITE);
+                cylinders_[s].SetHighlighted(HighlightColors.HIGHLIGHT_COLOR.WHITE);
 
-                if (visualization == VisualizationMethod.COLOR_CIRCLE) {
-                    spheres_[s].SetColor(colors_[j, i]);
+                if (visualization == SelectionVisualizationMethod.COLOR_CIRCLE) {
+                    cylinders_[s].SetColor(colors_[j, i]);
                 } else {
                     /* If arrows navigation used, calculate atomic radius used based on the atoms viusalization method */
-                    float atom_radius;
-                    if (atoms_object_.GetVisualizationMethod() == Atoms.VisualizationMethod.BALL_AND_STICK) {
-                        atom_radius = AtomicRadii.ball_and_stick_radius;
-                    } else {
-                        atom_radius = AtomicRadii.GetCovalentRadius(spheres_[s].atom_.element_);
-                    }
+                    float atom_radius = AtomicRadii.ball_and_stick_radius;
                     
                     /* and set the arrow objects in front of the atom */
                     arrows_[j, i].SetActive(true);
-                    arrows_[j, i].transform.position = spheres_[s].transform.position +
-                        Vector3.Normalize(Camera.main.transform.position - spheres_[s].transform.position) * 1.2f * atom_radius;
+                    Vector3 cylinder_middle = CalculateCylinderMiddle(cylinders_[s]);
+                    arrows_[j, i].transform.position = cylinder_middle +
+                        Vector3.Normalize(Camera.main.transform.position - cylinder_middle) * 1.2f * atom_radius;
 
                     /* make arrows face the camera */
                     arrows_[j, i].transform.rotation = Quaternion.LookRotation(arrows_[j, i].transform.position - Camera.main.transform.position, Camera.main.transform.up);
@@ -173,23 +169,23 @@ public class SelectionPlane : MonoBehaviour
             }
         }
 
-        /* Get the index for the selected sphere based on the control input */
-        int sphere_index = GetDirectionInput();
-        if (sphere_index != -1) {
-            ISphere s = spheres_[sphere_index];
+        /* Get the index for the selected cylinder based on the control input */
+        int cylinder_index = GetDirectionInput();
+        if (cylinder_index != -1) {
+            ICylinder s = cylinders_[cylinder_index];
 
             /* If clicked as well, move the selection */
             if (Input.GetMouseButtonDown(0)) {
-                MoveSelectionToSphere(s);
+                MoveSelectionToCylinder(s);
             } else {
-                /* Make input selected sphere white */
+                /* Make input selected cylinder white */
                 s.SetColor(Color.white);
             }
         }
     }
 
     public void ChangeVisualization() {
-        if (visualization == VisualizationMethod.ARROWS) {
+        if (visualization == SelectionVisualizationMethod.ARROWS) {
             /* If it was arrows, change to color circle */
             for (int i = 0; i < 3; i++) {
                 for (int j = 0; j < 3; j++) {
@@ -198,11 +194,11 @@ public class SelectionPlane : MonoBehaviour
                     }
                 }
             }
-            visualization = VisualizationMethod.COLOR_CIRCLE;
+            visualization = SelectionVisualizationMethod.COLOR_CIRCLE;
             /* Make color circle object active */
             transform.GetChild(0).gameObject.SetActive(true);
         } else {
-            visualization = VisualizationMethod.ARROWS;
+            visualization = SelectionVisualizationMethod.ARROWS;
             transform.GetChild(0).gameObject.SetActive(false);
         }
     }
@@ -215,76 +211,75 @@ public class SelectionPlane : MonoBehaviour
         ISphere s = GetComponent<ISphere>();
         s.SetRadius(Atoms.SELECTION_MODE_SPHERE_RADIUS);
 
-        /* Reset spheres within the previous radius */
-        for (int i = 0; i < spheres_.Count; i++) {
-            ISphere sphere = spheres_[i];
-            sphere.SetHighlighted(0);
-            sphere.ResetColor();
+        /* Reset cylinders within the previous radius */
+        for (int i = 0; i < cylinders_.Count; i++) {
+            ICylinder cylinder = cylinders_[i];
+            cylinder.SetHighlighted(0);
+            cylinder.ResetColor();
         }
-        spheres_.Clear();
+        cylinders_.Clear();
 
-        /* Get the new spheres within radius */
+        /* Get the new cylinders within radius */
         Collider[] hitColliders = Physics.OverlapSphere(this.transform.position, Atoms.SELECTION_MODE_SPHERE_RADIUS);
         foreach (Collider c in hitColliders) {
-            ISphere sphere = c.gameObject.GetComponent<ISphere>();
-            if (sphere == null || sphere == center_sphere_) continue;
+            ICylinder cylinder = c.gameObject.GetComponent<ICylinder>();
+            if (cylinder == null || cylinder == center_cylinder_) continue;
 
-            AddSphere(sphere);
+            AddCylinder(cylinder);
         }
     }
 
-    private void MoveSelectionToSphere(ISphere s) {
+    private void MoveSelectionToCylinder(ICylinder s) {
         /* Set new position */
-        transform.position = s.transform.position;
+        transform.position = CalculateCylinderMiddle(s);
         s.ResetColor();
 
-        /* Clear spheres object */
+        /* Clear cylinders object */
         ClearHighlightedAndResetColor();
-        spheres_.Clear();
+        cylinders_.Clear();
 
         /* Set info displayed */
-        center_sphere_ = s;
-        info_ui_.SetAtom(s);
+        center_cylinder_ = s;
 
-        /* Get the new spheres within radius */
+        /* Get the new cylinders within radius */
         Collider[] hitColliders = Physics.OverlapSphere(this.transform.position, Atoms.SELECTION_MODE_SPHERE_RADIUS);
         foreach (Collider c in hitColliders) {
-            ISphere sphere = c.gameObject.GetComponent<ISphere>();
-            if (sphere == null || sphere == s) continue;
+            ICylinder cylinder = c.gameObject.GetComponent<ICylinder>();
+            if (cylinder == null || cylinder == s) continue;
 
-            AddSphere(sphere);
+            AddCylinder(cylinder);
         }
     }
 
     /* Get the 2D direction input */
     private int GetDirectionInput() {
-        int sphere_index = -1;
-        if (Input.GetKey(KeyCode.RightArrow) || Input.GetKey(KeyCode.D)) sphere_index = array_[2, 1];
-        if (Input.GetKey(KeyCode.LeftArrow) || Input.GetKey(KeyCode.A)) sphere_index = array_[0, 1];
-        if (Input.GetKey(KeyCode.DownArrow) || Input.GetKey(KeyCode.S)) sphere_index = array_[1, 0];
-        if (Input.GetKey(KeyCode.UpArrow) || Input.GetKey(KeyCode.W)) sphere_index = array_[1, 2];
-        if ((Input.GetKey(KeyCode.RightArrow) || Input.GetKey(KeyCode.D)) && (Input.GetKey(KeyCode.UpArrow) || Input.GetKey(KeyCode.W))) sphere_index = array_[2, 2];
-        if ((Input.GetKey(KeyCode.LeftArrow) || Input.GetKey(KeyCode.A)) && (Input.GetKey(KeyCode.DownArrow) || Input.GetKey(KeyCode.S))) sphere_index = array_[0, 0];
-        if ((Input.GetKey(KeyCode.DownArrow) || Input.GetKey(KeyCode.S)) && (Input.GetKey(KeyCode.RightArrow) || Input.GetKey(KeyCode.D))) sphere_index = array_[2, 0];
-        if ((Input.GetKey(KeyCode.UpArrow) || Input.GetKey(KeyCode.W)) && (Input.GetKey(KeyCode.LeftArrow) || Input.GetKey(KeyCode.A))) sphere_index = array_[0, 2];
-        return sphere_index;
+        int array_index = -1;
+        if (Input.GetKey(KeyCode.RightArrow) || Input.GetKey(KeyCode.D)) array_index = array_[2, 1];
+        if (Input.GetKey(KeyCode.LeftArrow) || Input.GetKey(KeyCode.A)) array_index = array_[0, 1];
+        if (Input.GetKey(KeyCode.DownArrow) || Input.GetKey(KeyCode.S)) array_index = array_[1, 0];
+        if (Input.GetKey(KeyCode.UpArrow) || Input.GetKey(KeyCode.W)) array_index = array_[1, 2];
+        if ((Input.GetKey(KeyCode.RightArrow) || Input.GetKey(KeyCode.D)) && (Input.GetKey(KeyCode.UpArrow) || Input.GetKey(KeyCode.W))) array_index = array_[2, 2];
+        if ((Input.GetKey(KeyCode.LeftArrow) || Input.GetKey(KeyCode.A)) && (Input.GetKey(KeyCode.DownArrow) || Input.GetKey(KeyCode.S))) array_index = array_[0, 0];
+        if ((Input.GetKey(KeyCode.DownArrow) || Input.GetKey(KeyCode.S)) && (Input.GetKey(KeyCode.RightArrow) || Input.GetKey(KeyCode.D))) array_index = array_[2, 0];
+        if ((Input.GetKey(KeyCode.UpArrow) || Input.GetKey(KeyCode.W)) && (Input.GetKey(KeyCode.LeftArrow) || Input.GetKey(KeyCode.A))) array_index = array_[0, 2];
+        return array_index;
     }
 
-    /* Fills the 3x3 array with the closest spheres */
+    /* Fills the 3x3 array with the closest cylinders */
     private void FillArray() {
         /* Reset the array and deactivate all arrow objects */
         array_ = new int[3, 3];
         for (int i = 0; i < 3; i++) {
             for (int j = 0; j < 3; j++) {
                 array_[i, j] = -1;
-                if (visualization == VisualizationMethod.ARROWS && (i != 1 || j != 1)) {
+                if (visualization == SelectionVisualizationMethod.ARROWS && (i != 1 || j != 1)) {
                     arrows_[i, j].SetActive(false);
                 }
             }
         }
 
         /* Calculate the array position based on the angle defined by the local coordiante system x,y coordinates */
-        for (int s = 0; s < spheres_.Count; s++) {
+        for (int s = 0; s < cylinders_.Count; s++) {
             int i = -1, j = -1;
             float local_xy_angle = Mathf.Atan2(plane_positions_[s].y, plane_positions_[s].x);
             GetArrayIndex(out i, out j, local_xy_angle);
@@ -348,16 +343,16 @@ public class SelectionPlane : MonoBehaviour
     }
 
     private void ClearHighlightedAndResetColor() {
-        foreach (ISphere s in spheres_) {
+        foreach (ICylinder s in cylinders_) {
             s.SetHighlighted(HighlightColors.HIGHLIGHT_COLOR.NO_HIGHLIGHT);
             s.ResetColor();
         }
-        center_sphere_.SetHighlighted(HighlightColors.HIGHLIGHT_COLOR.NO_HIGHLIGHT);
-        center_sphere_.ResetColor();
+        center_cylinder_.SetHighlighted(HighlightColors.HIGHLIGHT_COLOR.NO_HIGHLIGHT);
+        center_cylinder_.ResetColor();
     }
 
-    public void AddSphere(ISphere s) {
-        spheres_.Add(s);
+    public void AddCylinder(ICylinder s) {
+        cylinders_.Add(s);
     }
 
     private void CalculateInverseTransform() {

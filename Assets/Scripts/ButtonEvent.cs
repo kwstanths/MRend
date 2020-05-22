@@ -11,7 +11,6 @@ public abstract class ButtonEvent : MonoBehaviour
     public abstract void RayCastHover();
 
     public abstract void RayCastHit();
-
 }
 
 

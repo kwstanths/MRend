@@ -578,7 +578,11 @@ MonoBehaviour:
     type: 3}
   prefab_arc_: {fileID: 7382895729098438983, guid: 621f8f68bcaba404fbb3c45ebc4bbed8,
     type: 3}
-  prefab_selection_plane_: {fileID: 8805392133184943683, guid: c08d248c3210c094c82644a9ea2b1655,
+  prefab_marked_atom_: {fileID: 3392410090016887737, guid: 2eee33645e36f6145b33e83d1d266b10,
+    type: 3}
+  prefab_selection_plane_spheres_: {fileID: 8805392133184943683, guid: c08d248c3210c094c82644a9ea2b1655,
+    type: 3}
+  prefab_selection_plane_cylinders_: {fileID: 8805392133184943683, guid: 6615d872826f66048891ffe9387407fd,
     type: 3}
   prefab_torsion_angle: {fileID: 2516226993051295148, guid: d18ae00e716975b46b71269c1e09e324,
     type: 3}
@@ -1016,6 +1020,11 @@ PrefabInstance:
         type: 3}
       propertyPath: button_hit_event_.m_PersistentCalls.m_Calls.Array.data[0].m_Arguments.m_ObjectArgumentAssemblyTypeName
       value: UnityEngine.Object, UnityEngine
+      objectReference: {fileID: 0}
+    - target: {fileID: 3360534086212757011, guid: aabcfa5f55009f844a8c0d81dbc7a4cf,
+        type: 3}
+      propertyPath: m_Text
+      value: 'Select mode: Atom exploration'
       objectReference: {fileID: 0}
     - target: {fileID: 4182883885015862960, guid: aabcfa5f55009f844a8c0d81dbc7a4cf,
         type: 3}
