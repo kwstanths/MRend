@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class BondDistance : MonoBehaviour
+public class AtomDistance : MonoBehaviour
 {
     public ISphere atom1_;
     public ISphere atom2_;
@@ -33,7 +33,7 @@ public class BondDistance : MonoBehaviour
         lr_.endWidth = width;
 
         AngleText temp = GetComponentInChildren<AngleText>();
-        temp.angle_degrees_ = Vector3.Distance(atom1_.transform.position, atom2_.transform.position).ToString("F3");
+        temp.angle_degrees_ = Vector3.Distance(atom1_.transform.position, atom2_.transform.position).ToString("F3") + " nm";
 
         Vector3 text_pos = text_direction * 0.08f;
         temp.GetComponent<RectTransform>().localPosition = text_pos;

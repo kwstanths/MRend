@@ -1,12 +1,6 @@
 ﻿Shader "Custom/ImpostorSphereBackFace"
 {
     Properties{
-        [Header(Forward rendering)]
-        _Radius("_Radius", Float) = 1.0
-        _Shininess("Shininess", Range(0, 128)) = 32
-        _SpecularIntensity("Specular intensity", Range(0, 1)) = 0.2
-
-        [Header(Deferred rendering)]
         _Albedo("Albedo", Color) = (1, 0, 0.8, 0)
         _RadiusAndShading("_RadiusAndShading", Color) = (0.07, 0.7, 0, 0)
     }
@@ -25,6 +19,7 @@
     
             #pragma vertex vert  
             #pragma fragment frag
+            #pragma multi_compile_instancing
 
             #include "UnityCG.cginc"
             #include "Lightning.cginc"
@@ -37,11 +32,19 @@
             uniform float4 _LightColor0;
     
             struct appdata {
-               float4 vertex : POSITION;
+                /* Instance ID */
+                UNITY_VERTEX_INPUT_INSTANCE_ID
+                /* Object space position */
+                float4 vertex : POSITION;
             };
             struct v2f {
-               float4 pos : SV_POSITION;
-               float4 view_pos : TEXCOORD0;
+                UNITY_VERTEX_INPUT_INSTANCE_ID
+                /* clip space position */
+                float4 pos : SV_POSITION;
+                /* view space position */
+                float4 view_pos : TEXCOORD0;
+                /* Single pass instanced rendering */
+                UNITY_VERTEX_OUTPUT_STEREO
             };
 
             /* Unpack extra instance properties */
@@ -52,20 +55,26 @@
 
             v2f vert(appdata input)
             {
-                float radius = UNITY_ACCESS_INSTANCED_PROP(Props, _RadiusAndShading);
-
-                /* Transform standard quad geometry to face the camera */
-                /* Multiply the width of the quad with the box correction */
-                /* Multiply with 2 sinxe the standard quad geometry goes from -0.5 to 0.5 and we want the standard sphere to have radius 1 */
                 v2f output;
+                UNITY_SETUP_INSTANCE_ID(input);
+                UNITY_INITIALIZE_OUTPUT(v2f, output);
+                UNITY_TRANSFER_INSTANCE_ID(input, output);
+                UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
+
+                float radius = UNITY_ACCESS_INSTANCED_PROP(Props, _RadiusAndShading).r;
+
                 output.view_pos = mul(UNITY_MATRIX_MV, float4(0.0, 0.0, 0.0, 1.0)) + BOX_CORRECTION * float4(input.vertex.x, input.vertex.y, 0.0, 0.0) * 2.0f * float4(radius, radius, 1.0, 1.0);
                 output.pos = mul(UNITY_MATRIX_P, output.view_pos);
-    
+
                 return output;
             }
     
             float4 frag(v2f input, out float outDepth : SV_Depth) : COLOR
             {
+                /* Set up instance id */
+                UNITY_SETUP_INSTANCE_ID(input);
+                UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
+
                 float4 radius_and_shading = UNITY_ACCESS_INSTANCED_PROP(Props, _RadiusAndShading);
                 float radius = radius_and_shading.r;
                 float ambient_factor = radius_and_shading.g;
@@ -105,6 +114,7 @@
 
             #pragma vertex vert  
             #pragma fragment frag
+            #pragma multi_compile_instancing
 
             #include "Lightning.cginc"
             #include "Impostor.cginc"
@@ -116,11 +126,19 @@
             uniform float4 _LightColor0;
 
             struct appdata {
-               float4 vertex : POSITION;
+                /* Instance ID */
+                UNITY_VERTEX_INPUT_INSTANCE_ID
+                /* Object space position */
+                float4 vertex : POSITION;
             };
             struct v2f {
-               float4 pos : SV_POSITION;
-               float4 view_pos : TEXCOORD0;
+                UNITY_VERTEX_INPUT_INSTANCE_ID
+                /* clip space position */
+                float4 pos : SV_POSITION;
+                /* view space position */
+                float4 view_pos : TEXCOORD0;
+                /* Single pass instanced rendering */
+                UNITY_VERTEX_OUTPUT_STEREO
             };
 
             UNITY_INSTANCING_BUFFER_START(Props)
@@ -130,17 +148,26 @@
 
             v2f vert(appdata input)
             {
-               float radius = UNITY_ACCESS_INSTANCED_PROP(Props, _RadiusAndShading);
+                v2f output;
+                UNITY_SETUP_INSTANCE_ID(input);
+                UNITY_INITIALIZE_OUTPUT(v2f, output);
+                UNITY_TRANSFER_INSTANCE_ID(input, output);
+                UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
 
-               v2f output;
-               output.view_pos = mul(UNITY_MATRIX_MV, float4(0.0, 0.0, 0.0, 1.0)) + BOX_CORRECTION * float4(input.vertex.x, input.vertex.y, 0.0, 0.0) * 2.0f * float4(radius, radius, 1.0, 1.0);
-               output.pos = mul(UNITY_MATRIX_P, output.view_pos);
+                float radius = UNITY_ACCESS_INSTANCED_PROP(Props, _RadiusAndShading).r;
 
-               return output;
+                output.view_pos = mul(UNITY_MATRIX_MV, float4(0.0, 0.0, 0.0, 1.0)) + BOX_CORRECTION * float4(input.vertex.x, input.vertex.y, 0.0, 0.0) * 2.0f * float4(radius, radius, 1.0, 1.0);
+                output.pos = mul(UNITY_MATRIX_P, output.view_pos);
+
+                return output;
             }
 
             float4 frag(v2f input, out float outDepth : SV_Depth) : COLOR
             {
+                /* Set up instance id */
+                UNITY_SETUP_INSTANCE_ID(input);
+                UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
+
                 float4 radius_and_shading = UNITY_ACCESS_INSTANCED_PROP(Props, _RadiusAndShading);
                 float radius = radius_and_shading.r;
                 float ambient_factor = radius_and_shading.g;
@@ -201,6 +228,8 @@
                 float4 pos : SV_POSITION;
                 /* view space position */
                 float4 view_pos : TEXCOORD0;
+                /* Single pass instanced rendering */
+                UNITY_VERTEX_OUTPUT_STEREO
             };
             struct fragment_output
             {
@@ -220,7 +249,9 @@
             {
                v2f output;
                UNITY_SETUP_INSTANCE_ID(input);
+               UNITY_INITIALIZE_OUTPUT(v2f, output);
                UNITY_TRANSFER_INSTANCE_ID(input, output);
+               UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
 
                float radius = UNITY_ACCESS_INSTANCED_PROP(Props, _RadiusAndShading);
 
@@ -234,6 +265,7 @@
             {
                 /* Set up instance id */
                 UNITY_SETUP_INSTANCE_ID(input);
+                UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
                 
                 float4 radius_and_shading = UNITY_ACCESS_INSTANCED_PROP(Props, _RadiusAndShading);
                 float radius = radius_and_shading.r;

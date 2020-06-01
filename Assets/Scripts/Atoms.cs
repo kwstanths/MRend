@@ -91,6 +91,7 @@ public class Atoms : MonoBehaviour
         PDBParser.ParseAtomsAndConnections(@"Assets/MModels/1tes.pdb", out atoms, out connections);
         //PDBParser.ParseAtomsAndConnections(@"Assets/MModels/4f0h.pdb", out atoms, out connections);
         //PDBParser.ParseAtomsAndConnections(@"Assets/MModels/1s5l.pdb", out atoms, out connections);
+        //PDBParser.ParseAtomsAndConnections(@"Assets/MModels/1ea4.pdb", out atoms, out connections);
 
         Bounds atoms_bounding_box = new Bounds();
 
@@ -103,6 +104,7 @@ public class Atoms : MonoBehaviour
             /* Instantiate the object */
             GameObject temp = Instantiate(prefab_atom, atom_position, Quaternion.identity);
             temp.transform.parent = transform;
+            temp.isStatic = this.gameObject.isStatic;
 
             /* Find ISphere component, and set the atom */
             ISphere isphere = temp.GetComponent<ISphere>();
@@ -149,6 +151,7 @@ public class Atoms : MonoBehaviour
                         bonds++;
                         GameObject temp = Instantiate(prefab_bond, a_position, Quaternion.identity);
                         temp.transform.parent = bonds_transform;
+                        temp.isStatic = this.gameObject.isStatic;
 
                         Vector3 direction = b_position - a_position;
                         Quaternion toRotation = Quaternion.FromToRotation(new Vector3(0, 1, 0), direction);
@@ -161,6 +164,7 @@ public class Atoms : MonoBehaviour
                 }
             }
         }
+        Debug.Log("Spawned: " + bonds + " bonds");
 
         SetCameraAndPanelBoxPosition(atoms_bounding_box);
 
@@ -172,7 +176,6 @@ public class Atoms : MonoBehaviour
 
         info_ui_ = Camera.main.transform.Find("AtomInfoBox").GetComponent<AtomInfoBox>();
 
-        Debug.Log("Spawned: " + bonds + " bonds");
     }
     
     private void SetCameraAndPanelBoxPosition(Bounds atoms_bounds) {
@@ -180,7 +183,8 @@ public class Atoms : MonoBehaviour
         Camera.main.transform.LookAt(atoms_bounds.center);
 
         Transform panel_box = transform.Find("Panel");
-        panel_box.transform.position = atoms_bounds.center + (atoms_bounds.extents.x + 2) * Camera.main.transform.right;
+        float min_extend = Mathf.Min(atoms_bounds.extents.x, atoms_bounds.extents.y, atoms_bounds.extents.z);
+        panel_box.transform.position = atoms_bounds.center + (min_extend + 2) * Camera.main.transform.right;
     }
 
     public VisualizationMethod GetVisualizationMethod()
@@ -317,6 +321,7 @@ public class Atoms : MonoBehaviour
             case STATE.ATOM_DISTANCES:
                 if (selection_plane_previous_ != null) Destroy(selection_plane_previous_);
                 if (atom_distance_previous_ != null) Destroy(atom_distance_previous_);
+                if (marked_atom_object_ != null) Destroy(marked_atom_object_);
                 atoms_selected_[0] = null;
                 atoms_selected_[1] = null;
                 atoms_selected_[2] = null;
@@ -361,14 +366,11 @@ public class Atoms : MonoBehaviour
         ClearHighlighted();
     }
 
-    //void OnGUI()
-    //{
-    //GUI.Label(new Rect(0, 0, 100, 100), (1.0f / Time.smoothDeltaTime).ToString());
-    //}
+    void OnGUI() {
+        GUI.Label(new Rect(0, 0, 100, 100), (1.0f / Time.smoothDeltaTime).ToString());
+    }
 
-    //Update is called once per frame
-    void Update()
-    {
+    void Update() {
 
         if (Input.GetKey(KeyCode.Space)) {
             bool ui_hit = RayCastUIlayer();
@@ -393,6 +395,14 @@ public class Atoms : MonoBehaviour
             }
         }
 
+        if (Input.GetKey(KeyCode.T)) {
+            MoveTowardsSelectedObject(speed_object_move);
+        }
+
+        if (Input.GetKey(KeyCode.Y)) {
+            MoveTowardsSelectedObject(-speed_object_move);
+        }
+
 
         if (state == STATE.EXPLORING_ATOMS) {
 
@@ -404,13 +414,6 @@ public class Atoms : MonoBehaviour
                     return;
                 }
 
-                if (Input.GetKey(KeyCode.T)) {
-                    MoveTowardsSelectedAtom(speed_object_move);
-                }
-
-                if (Input.GetKey(KeyCode.Y)) {
-                    MoveTowardsSelectedAtom(-speed_object_move);
-                }
                 return;
             }
 
@@ -428,11 +431,12 @@ public class Atoms : MonoBehaviour
                     if (exploring_method_ == ExploringMethod.RESIDUES && !highlighted_spheres_.Contains(isphere)) {
                         ClearHighlighted();
                         HighLightResidue(isphere);
-                    } else if (exploring_method_ == ExploringMethod.CHAINS) {
-                        ClearHighlighted();
-
-                        isphere.SetHighlighted(HighlightColors.HIGHLIGHT_COLOR.WHITE);
-                        highlighted_spheres_.Add(isphere);
+                    }
+                    else if (exploring_method_ == ExploringMethod.CHAINS) {
+                        if (!highlighted_spheres_.Contains(isphere)) {
+                            ClearHighlighted();
+                            HighLightResidue(isphere);
+                        }
 
                         if (!colored_spheres_.Contains(isphere)) {
                             ClearColored();
@@ -442,14 +446,16 @@ public class Atoms : MonoBehaviour
 
                 }
 
-            } else {
+            }
+            else {
                 ClearHighlighted();
-                if (!(exploring_method_ == ExploringMethod.CHAINS)) ClearColored();
+                if (exploring_method_ != ExploringMethod.CHAINS) ClearColored();
 
                 //Debug.DrawRay(Camera.main.transform.position, Camera.main.transform.forward * 1000, Color.white);
             }
 
-        } else if (state == STATE.ATOM_DISTANCES) {
+        }
+        else if (state == STATE.ATOM_DISTANCES) {
 
             if (Input.GetKeyDown(KeyCode.Escape)) {
                 ResetState();
@@ -467,10 +473,17 @@ public class Atoms : MonoBehaviour
                     atom_selected_id_++;
 
                     if (marked_atom_object_ == null) {
-                        marked_atom_object_ = Instantiate(prefab_marked_atom_, plane.center_sphere_.transform.position + 1.5f * Vector3.up * AtomicRadii.ball_and_stick_radius, Quaternion.identity);
-                    } else {
-                        marked_atom_object_.transform.position = plane.center_sphere_.transform.position + 1.5f * Vector3.up * AtomicRadii.ball_and_stick_radius;
+                        marked_atom_object_ = Instantiate(prefab_marked_atom_, plane.center_sphere_.transform.position, Quaternion.identity);
+                        marked_atom_object_.transform.parent = this.transform;
                     }
+                    float selected_atom_radius;
+                    if (GetVisualizationMethod() == VisualizationMethod.BALL_AND_STICK) {
+                        selected_atom_radius = AtomicRadii.ball_and_stick_radius;
+                    }
+                    else {
+                        selected_atom_radius = AtomicRadii.GetCovalentRadius(plane.center_sphere_.atom_.element_);
+                    }
+                    marked_atom_object_.transform.position = plane.center_sphere_.transform.position + 1.4f * Vector3.up * selected_atom_radius;
 
                     if (previously_added != null) {
                         Vector3 middle = (previously_added.transform.position + plane.center_sphere_.transform.position) / 2;
@@ -480,7 +493,7 @@ public class Atoms : MonoBehaviour
                         /* */
                         atom_distance_previous_ = Instantiate(prefab_atom_distance_, middle, Quaternion.identity);
                         atom_distance_previous_.transform.parent = transform;
-                        BondDistance temp = atom_distance_previous_.GetComponent<BondDistance>();
+                        AtomDistance temp = atom_distance_previous_.GetComponent<AtomDistance>();
                         temp.atom1_ = previously_added;
                         temp.atom2_ = plane.center_sphere_;
                     }
@@ -502,11 +515,12 @@ public class Atoms : MonoBehaviour
                     if (exploring_method_ == ExploringMethod.RESIDUES && !highlighted_spheres_.Contains(isphere)) {
                         ClearHighlighted();
                         HighLightResidue(isphere);
-                    } else if (exploring_method_ == ExploringMethod.CHAINS) {
-                        ClearHighlighted();
-
-                        isphere.SetHighlighted(HighlightColors.HIGHLIGHT_COLOR.WHITE);
-                        highlighted_spheres_.Add(isphere);
+                    }
+                    else if (exploring_method_ == ExploringMethod.CHAINS) {
+                        if (!highlighted_spheres_.Contains(isphere)) {
+                            ClearHighlighted();
+                            HighLightResidue(isphere);
+                        }
 
                         if (!colored_spheres_.Contains(isphere)) {
                             ClearColored();
@@ -518,11 +532,12 @@ public class Atoms : MonoBehaviour
             }
             else {
                 ClearHighlighted();
-                if (!(exploring_method_ == ExploringMethod.CHAINS)) ClearColored();
+                if (exploring_method_ != ExploringMethod.CHAINS) ClearColored();
             }
 
 
-        } else if (state == STATE.BOND_ANGLES) {
+        }
+        else if (state == STATE.BOND_ANGLES) {
 
             if (Input.GetKeyDown(KeyCode.Escape)) {
                 ResetState();
@@ -563,11 +578,13 @@ public class Atoms : MonoBehaviour
 
                 }
 
-            } else {
+            }
+            else {
                 ClearHighlighted();
             }
 
-        } else if (state == STATE.TORSION_ANGLE) {
+        }
+        else if (state == STATE.TORSION_ANGLE) {
 
             if (torsion_plane_spawned_) {
                 atoms_selected_[0].SetHighlighted(HighlightColors.HIGHLIGHT_COLOR.GREEN);
@@ -577,7 +594,17 @@ public class Atoms : MonoBehaviour
             }
 
             if (Input.GetKeyDown(KeyCode.Escape)) {
-                ResetState();
+                if (torsion_plane_spawned_) {
+                    ISphere last_added_sphere = ((atom_selected_id_ == 0) ? atoms_selected_[3] : atoms_selected_[atom_selected_id_ - 1]);
+                    ResetState();
+                    selected_atom_ = last_added_sphere;
+                    info_ui_.SetAtom(last_added_sphere);
+                    SpawnSelectionPlaneSpheres();
+                }
+                else {
+                    ResetState();
+                }
+
                 return;
             }
 
@@ -615,11 +642,12 @@ public class Atoms : MonoBehaviour
                     if (exploring_method_ == ExploringMethod.RESIDUES && !highlighted_spheres_.Contains(isphere)) {
                         ClearHighlighted();
                         HighLightResidue(isphere);
-                    } else if (exploring_method_ == ExploringMethod.CHAINS) {
-                        ClearHighlighted();
-
-                        isphere.SetHighlighted(HighlightColors.HIGHLIGHT_COLOR.WHITE);
-                        highlighted_spheres_.Add(isphere);
+                    }
+                    else if (exploring_method_ == ExploringMethod.CHAINS) {
+                        if (!highlighted_spheres_.Contains(isphere)) {
+                            ClearHighlighted();
+                            HighLightResidue(isphere);
+                        }
 
                         if (!colored_spheres_.Contains(isphere)) {
                             ClearColored();
@@ -628,15 +656,16 @@ public class Atoms : MonoBehaviour
                     }
                 }
 
-            } else {
+            }
+            else {
                 ClearHighlighted();
-                if (!(exploring_method_ == ExploringMethod.CHAINS)) ClearColored();
+                if (exploring_method_ != ExploringMethod.CHAINS) ClearColored();
             }
 
 
         } /* End of torsion angle state */
 
-        
+
     }
 
     private void SpawnTorsionAngle() {
@@ -709,16 +738,34 @@ public class Atoms : MonoBehaviour
         }
     }
 
-    private void MoveTowardsSelectedAtom(float speed) {
-        /* Calculate desired position of the selected sphere, just in front of the camera */
-        Vector3 desired_position = Camera.main.transform.position + 2 * Camera.main.transform.forward * AtomicRadii.GetCovalentRadius(selected_atom_.atom_.element_);
-        /* Calculate the movement speed */
-        speed = speed * Vector3.Distance(selected_atom_.transform.position, desired_position);
+    private void MoveTowardsSelectedObject(float speed) {
+        if (selection_plane_previous_ == null) return;
+        /* Calculate desired position of the selected object, just in front of the camera */
+        SelectionPlaneSpheres plane1 = selection_plane_previous_.GetComponent<SelectionPlaneSpheres>();
+        SelectionPlaneCylinders plane2 = selection_plane_previous_.GetComponent<SelectionPlaneCylinders>();
 
-        SelectionPlaneSpheres plane = selection_plane_previous_.GetComponent<SelectionPlaneSpheres>();
-        
+        float distance = 0;
+        Vector3 target;
+        if (plane1 != null) {
+            target = plane1.center_sphere_.transform.position;
+            if (GetVisualizationMethod() == VisualizationMethod.BALL_AND_STICK) {
+                distance = 6 * AtomicRadii.ball_and_stick_radius;
+            } else {
+                distance= 4 * AtomicRadii.GetCovalentRadius(selected_atom_.atom_.element_);
+            }
+        } else if (plane2 != null) {
+            target = plane2.center_cylinder_.transform.position + plane2.center_cylinder_.transform.up * plane2.center_cylinder_.height_ / 2;
+            distance = plane2.center_cylinder_.height_;
+        } else {
+            return;
+        }
+        Vector3 movement_direction = Vector3.Normalize(target - Camera.main.transform.position);
+
+        Vector3 desired_position = target - movement_direction * distance;
+        /* Calculate the movement speed */
+        speed = speed * Vector3.Distance(desired_position, Camera.main.transform.position);
+
         /* Change position */
-        Vector3 movement_direction = Vector3.Normalize(plane.center_sphere_.transform.position - desired_position);
         transform.position = transform.position - speed * Time.deltaTime * movement_direction;
     }
 

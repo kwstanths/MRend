@@ -44,6 +44,8 @@
                 float4 pos : SV_POSITION;
                 /* view space position */
                 float4 view_pos : TEXCOORD0;
+                /* Single pass instanced rendering */
+                UNITY_VERTEX_OUTPUT_STEREO
             };
 
             /* Unpack extra instance properties */
@@ -56,7 +58,9 @@
             {
                 v2f output;
                 UNITY_SETUP_INSTANCE_ID(input);
+                UNITY_INITIALIZE_OUTPUT(v2f, output);
                 UNITY_TRANSFER_INSTANCE_ID(input, output);
+                UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
 
                 float radius = UNITY_ACCESS_INSTANCED_PROP(Props, _RadiusAndShading).r;
 
@@ -73,6 +77,7 @@
             {
                 /* Set up instance id */
                 UNITY_SETUP_INSTANCE_ID(input);
+                UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
 
                 float4 radius_and_shading = UNITY_ACCESS_INSTANCED_PROP(Props, _RadiusAndShading);
                 float radius = radius_and_shading.r;
@@ -127,15 +132,17 @@
             struct appdata {
                 /* Instance ID */
                 UNITY_VERTEX_INPUT_INSTANCE_ID
-                    /* Object space position */
-                    float4 vertex : POSITION;
+                /* Object space position */
+                float4 vertex : POSITION;
             };
             struct v2f {
                 UNITY_VERTEX_INPUT_INSTANCE_ID
-                    /* clip space position */
-                    float4 pos : SV_POSITION;
+                /* clip space position */
+                float4 pos : SV_POSITION;
                 /* view space position */
                 float4 view_pos : TEXCOORD0;
+                /* Single pass instanced rendering */
+                UNITY_VERTEX_OUTPUT_STEREO
             };
 
             UNITY_INSTANCING_BUFFER_START(Props)
@@ -147,7 +154,9 @@
             {
                 v2f output;
                 UNITY_SETUP_INSTANCE_ID(input);
+                UNITY_INITIALIZE_OUTPUT(v2f, output);
                 UNITY_TRANSFER_INSTANCE_ID(input, output);
+                UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
 
                 float radius = UNITY_ACCESS_INSTANCED_PROP(Props, _RadiusAndShading).r;
 
@@ -161,6 +170,7 @@
             {
                 /* Set up instance id */
                 UNITY_SETUP_INSTANCE_ID(input);
+                UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
 
                 float4 radius_and_shading = UNITY_ACCESS_INSTANCED_PROP(Props, _RadiusAndShading);
                 float radius = radius_and_shading.r;
@@ -222,6 +232,8 @@
                 float4 pos : SV_POSITION;
                 /* view space position */
                 float4 view_pos : TEXCOORD0;
+                /* Single pass instanced rendering */
+                UNITY_VERTEX_OUTPUT_STEREO
             };
             struct fragment_output
             {
@@ -241,7 +253,9 @@
             {
                v2f output;
                UNITY_SETUP_INSTANCE_ID(input);
+               UNITY_INITIALIZE_OUTPUT(v2f, output);
                UNITY_TRANSFER_INSTANCE_ID(input, output);
+               UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
 
                float radius = UNITY_ACCESS_INSTANCED_PROP(Props, _RadiusAndShading);
 
@@ -255,6 +269,7 @@
             {
                 /* Set up instance id */
                 UNITY_SETUP_INSTANCE_ID(input);
+                UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
                 
                 float4 radius_and_shading = UNITY_ACCESS_INSTANCED_PROP(Props, _RadiusAndShading);
                 float radius = radius_and_shading.r;

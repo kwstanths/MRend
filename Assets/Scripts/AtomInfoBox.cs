@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
@@ -6,6 +7,10 @@ using UnityEngine.UI;
 
 public class AtomInfoBox : MonoBehaviour
 {
+    public float distance_from_camera = 0.5f;
+    public float vertical_offset = 0.1f;
+    public float horizontal_offset = 0.1f;
+
     Canvas canvas_;
 
     Text text_element_;
@@ -35,13 +40,29 @@ public class AtomInfoBox : MonoBehaviour
         text_torsion_3_ = canvas_.transform.Find("torsion_atom_3").GetComponent<Text>();
         text_torsion_4_ = canvas_.transform.Find("torsion_atom_4").GetComponent<Text>();
 
-        transform.rotation = Quaternion.LookRotation(Camera.main.transform.forward);
+        CalculatePosition();
     }
 
-    // Update is called once per frame
-    void Update()
-    {
-        
+    /* Calculate the position of the panel, to be on the top left of the camera, in world space */
+    private void CalculatePosition() {
+        float panel_distance = distance_from_camera;
+
+        /* Calcualte vertical and horizontal offset, half angles */
+        float vertical_fov = Camera.main.fieldOfView * Mathf.Deg2Rad;
+        float horizontal_fov = Mathf.Atan(Mathf.Tan(vertical_fov / 2) * Camera.main.aspect) * 2.0f;
+        float horizontal_angle = horizontal_fov / 2;
+        float vertical_angle = vertical_fov / 2;
+
+        /* Calculate the half width and height of the world, at a given distace from the camera */
+        float half_width = panel_distance * Mathf.Tan(horizontal_angle);
+        float half_height = panel_distance * Mathf.Tan(vertical_angle);
+        /* Calculate the half width and height of the panel */
+        float panel_half_width = transform.localScale.x * canvas_.transform.localScale.x * canvas_.GetComponent<RectTransform>().sizeDelta.x / 2;
+        float panel_half_height = transform.localScale.y * canvas_.transform.localScale.y * canvas_.GetComponent<RectTransform>().sizeDelta.y / 2;
+        /* Set the position on the top left, in the local camera space */
+        this.transform.localPosition = new Vector3(-half_width + panel_half_width + horizontal_offset, half_height - panel_half_height - vertical_offset, panel_distance);
+        /* Make panel face the camera */
+        transform.rotation = Quaternion.LookRotation(Camera.main.transform.forward);
     }
 
     public void SetAtom(ISphere s) {

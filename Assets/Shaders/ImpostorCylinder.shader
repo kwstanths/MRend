@@ -42,6 +42,8 @@
                 float4 vertex : SV_POSITION;
                 /* world space position */
                 float4 world_pos : TEXCOORD0;
+                /* Single pass instanced rendering */
+                UNITY_VERTEX_OUTPUT_STEREO
             };
 
             /* Unpack extra instance properties */
@@ -63,7 +65,9 @@
             {
                 v2f output;
                 UNITY_SETUP_INSTANCE_ID(input);
+                UNITY_INITIALIZE_OUTPUT(v2f, output);
                 UNITY_TRANSFER_INSTANCE_ID(input, output);
+                UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
 
                 output.vertex = UnityObjectToClipPos(input.vertex);
                 output.world_pos = mul(UNITY_MATRIX_M, input.vertex);
@@ -74,6 +78,7 @@
             {
                 /* Set up instance id */
                 UNITY_SETUP_INSTANCE_ID(input);
+                UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
 
                 float4 radius_and_shading = UNITY_ACCESS_INSTANCED_PROP(Props, _RadiusAndShading);
                 float radius = UNITY_ACCESS_INSTANCED_PROP(Props, _Albedo).a;
@@ -137,6 +142,8 @@
                     float4 vertex : SV_POSITION;
                 /* world space position */
                 float4 world_pos : TEXCOORD0;
+                /* Single pass instanced rendering */
+                UNITY_VERTEX_OUTPUT_STEREO
             };
 
             UNITY_INSTANCING_BUFFER_START(Props)
@@ -157,7 +164,9 @@
             {
                 v2f output;
                 UNITY_SETUP_INSTANCE_ID(input);
+                UNITY_INITIALIZE_OUTPUT(v2f, output);
                 UNITY_TRANSFER_INSTANCE_ID(input, output);
+                UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
 
                 output.vertex = UnityObjectToClipPos(input.vertex);
                 output.world_pos = mul(UNITY_MATRIX_M, input.vertex);
@@ -168,6 +177,7 @@
             {
                 /* Set up instance id */
                 UNITY_SETUP_INSTANCE_ID(input);
+                UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
                 
                 float4 radius_and_shading = UNITY_ACCESS_INSTANCED_PROP(Props, _RadiusAndShading);
                 float radius = UNITY_ACCESS_INSTANCED_PROP(Props, _Albedo).a;
@@ -231,6 +241,8 @@
                 float4 vertex : SV_POSITION;
                 /* world space position */
                 float4 world_pos : TEXCOORD0;
+                /* Single pass instanced rendering */
+                UNITY_VERTEX_OUTPUT_STEREO
             };
             struct fragment_output
             {
@@ -259,7 +271,9 @@
             {
                 v2f output;
                 UNITY_SETUP_INSTANCE_ID(input);
+                UNITY_INITIALIZE_OUTPUT(v2f, output);
                 UNITY_TRANSFER_INSTANCE_ID(input, output);
+                UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
 
                 output.vertex = UnityObjectToClipPos(input.vertex);
                 output.world_pos = mul(UNITY_MATRIX_M, input.vertex);
@@ -270,6 +284,7 @@
             {
                 /* Set up instance id */
                 UNITY_SETUP_INSTANCE_ID(input);
+                UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
                 
                 float4 radius_and_shading = UNITY_ACCESS_INSTANCED_PROP(Props, _RadiusAndShading);
                 float4 albedo = UNITY_ACCESS_INSTANCED_PROP(Props, _Albedo);

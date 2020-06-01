@@ -9,6 +9,7 @@
     int _Thickness;
     /* The Gbuffer render target with the highlighted information */
     sampler2D _CameraGBufferTexture2;
+    half4 _CameraGBufferTexture2_ST;
     /* The size inforamtion for the above texture */
     float4 _CameraGBufferTexture2_TexelSize;
 
@@ -18,12 +19,16 @@
         else return float4(0, 0.9, 0, 1);
     }
 
+    float4 SampleTexture(float2 uv) {
+        return tex2D(_CameraGBufferTexture2, UnityStereoScreenSpaceUVAdjust(uv, _CameraGBufferTexture2_ST));
+    }
+
     float4 Frag(VaryingsDefault i) : SV_Target
     {
         /* Get size information */
         float2 tex_size = _CameraGBufferTexture2_TexelSize.xy;
         /* Get value for current fragment */
-        float selected_value = tex2D(_CameraGBufferTexture2, i.texcoord).w;
+        float selected_value = SampleTexture(i.texcoord).w;
         bool is_border = false;
         /* If this fragment is highlighted, it could belong to the border */
         if (selected_value > 0) {
@@ -37,7 +42,7 @@
                         continue;
                     }
                     float2 offset = float2(x, y) * tex_size;
-                    if (tex2D(_CameraGBufferTexture2, i.texcoord + offset).w != selected_value) {
+                    if (SampleTexture(i.texcoord + offset).w != selected_value) {
                         is_border = true;
                     }
                 }

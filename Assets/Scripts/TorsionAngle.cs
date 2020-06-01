@@ -4,6 +4,7 @@ using UnityEngine;
 
 public class TorsionAngle : MonoBehaviour
 {
+    /* The positions that define the torsion angle, in order */
     public Vector3 pos1_;
     public Vector3 pos2_;
     public Vector3 pos3_;
@@ -11,10 +12,11 @@ public class TorsionAngle : MonoBehaviour
 
     [SerializeField] GameObject prefab_arc = null;
 
+    /* The normals of the two planes */
     Vector3 normal1_, normal2_;
-    Vector3 dir1_, dir2_;
 
     private LineRenderer lr_;
+    /* Hold reference to one of the planes spawned, to know the position of the axis objects */
     TorsionPlane plane1_;
 
     /* Holds the previous transform matrix from local to world space */
@@ -25,11 +27,13 @@ public class TorsionAngle : MonoBehaviour
     {
         local_to_world_ = transform.localToWorldMatrix;
 
+        /* Calcualte plane normals, torsion angle value, and sign */
         normal1_ = Vector3.Normalize(GetPlaneNormal(pos1_, pos2_, pos3_));
         normal2_ = Vector3.Normalize(GetPlaneNormal(pos2_, pos3_, pos4_));
         float angle = Mathf.Acos(Vector3.Dot(normal1_, normal2_));
         float sign = Mathf.Sign(Vector3.Dot(normal2_, pos1_ - pos2_));
 
+        /* Set the positions for the two torsion plane objects */
         Transform p1 = transform.GetChild(0);
         plane1_ = p1.GetComponent<TorsionPlane>();
         plane1_.pos1_ = pos3_;
@@ -42,27 +46,31 @@ public class TorsionAngle : MonoBehaviour
         plane2.pos2_ = pos3_;
         plane2.pos3_ = pos4_;
 
+        /* Line renderer for the axis line */
         lr_ = GetComponent<LineRenderer>();
         lr_.positionCount = 0;
         lr_.startWidth = 0.003f;
         lr_.endWidth = 0.003f;
 
+        /* Soawn an arc for the torsion angle */
         GameObject temp = Instantiate(prefab_arc, (pos2_ + pos3_) / 2, Quaternion.identity);
         temp.transform.parent = transform;
 
+        /* Calcualte the X and W vectors required for the arc, based on the arc logic */
+        Vector3 dir1 = Vector3.Normalize(-Vector3.Cross(normal1_, Vector3.Normalize(pos2_ - pos3_)));
+        Vector3 dir2 = Vector3.Normalize(-Vector3.Cross(normal2_, Vector3.Normalize(pos2_ - pos3_)));
+
+        /* Spawn the arc */
         ArcRenderer arc = temp.GetComponent<ArcRenderer>();
-
-        dir1_ = Vector3.Normalize(-Vector3.Cross(normal1_, Vector3.Normalize(pos2_ - pos3_)));
-        dir2_ = Vector3.Normalize(-Vector3.Cross(normal2_, Vector3.Normalize(pos2_ - pos3_)));
-
-        arc.X_ = dir1_;
-        arc.W_ = dir2_;
+        arc.X_ = dir1;
+        arc.W_ = dir2;
         arc.Radius_ = 0.055f;
         arc.angle_positive_ = sign > 0;
     }
 
     private void Update() {
         if (lr_.positionCount == 0 || local_to_world_ != transform.localToWorldMatrix) {
+            /* If line is not spawned, or the object has been repositioned, then calcualte the axis line */
             local_to_world_ = transform.localToWorldMatrix;
 
             Vector3 A, B;

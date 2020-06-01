@@ -106,7 +106,7 @@ public class ModePanel : MonoBehaviour
     }
 
     public void SetRadius(float radius) {
-        text_radius_.text = radius.ToString("F2");
+        text_radius_.text = radius.ToString("F2") + " nm";
     }
 
     public float GetHalfSizeX() {

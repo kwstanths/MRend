@@ -68,7 +68,9 @@ public class ICylinder : MonoBehaviour
         material_block_.SetHighlighted(HighlightColors.GetColorValue(color));
     }
 
-    /* Calculate a transform for that coordinate space defined by this cylinder, currently NOT USED */
+
+
+    /* Calculate a transform matrix for the coordinate system defined by this cylinder, currently NOT USED */
     private void CalculateInverseTransform()
     {
         Vector3 O = transform.position;

@@ -29,7 +29,7 @@ public class IgnoreZQuad : MonoBehaviour
             Material updatedMaterial = new Material(current_mat);
             updatedMaterial.SetInt("unity_GUIZTestMode", (int)lequal);
             renderer.material = updatedMaterial;
-            renderer.material.renderQueue = (int)RenderQueue.Transparent;
+            renderer.material.renderQueue = (int)RenderQueue.Transparent + transparent_queue_addition_;
         }
     }
 

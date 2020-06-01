@@ -55,7 +55,7 @@ public class ArcRenderer : MonoBehaviour
 
         /* Set the angle text using one decimal */
         AngleText temp = GetComponentInChildren<AngleText>();
-        temp.angle_degrees_ = ((angle_positive_) ? "" : "-") + angle_deg_.ToString("F1");
+        temp.angle_degrees_ = ((angle_positive_) ? "" : "-") + angle_deg_.ToString("F1") + "\u00B0";
 
         /* Calculate the position of the text using the direction vectors and the radius */
         /* Multiply by a factor to extend the text a bit outside of the angle */
@@ -89,10 +89,11 @@ public class ArcRenderer : MonoBehaviour
         Vector3 Z_ = -Vector3.Normalize(Vector3.Cross(X_, W_));
         Vector3 Y_ = -Vector3.Normalize(Vector3.Cross(Z_, X_));
 
+        /* Calcualte angle */
         float angle = Mathf.Acos(Vector3.Dot(X_, W_));
         angle_deg_ = angle * Mathf.Rad2Deg;
 
-        /* Calculate points */
+        /* Calculate local object space points along the arc */
         for (int i = 0; i <= resolution_; i++) {
             float t = (float) i / (float) resolution_;
             float phi = t * angle;

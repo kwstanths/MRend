@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 7382895729098438985}
   - component: {fileID: 8584069751080085911}
   m_Layer: 0
-  m_Name: BondDistance
+  m_Name: AtomDistance
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -275,5 +275,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5c34a9d6de418614db26ac861ff19a6c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  transparent_queue_addition_: 2
+  transparent_queue_addition_: 3
   do_z_test_: 0
