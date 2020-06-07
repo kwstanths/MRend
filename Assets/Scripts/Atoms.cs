@@ -37,6 +37,8 @@ public class Atoms : MonoBehaviour
     private HashSet<ISphere> highlighted_spheres_ = new HashSet<ISphere>();
     /* A set that holds the currently colored spheres */
     private HashSet<ISphere> colored_spheres_ = new HashSet<ISphere>();
+    /* */
+    BoundingBox atoms_bounding_box_ = new BoundingBox();
 
     /* Interaction state */
     public enum STATE
@@ -65,6 +67,7 @@ public class Atoms : MonoBehaviour
     /* Selected atom and bond paramters */
     [SerializeField] GameObject prefab_marked_atom_ = null;
     GameObject marked_atom_object_ = null;
+    GameObject marked_sphere_ = null;
 
     private ISphere selected_atom_ = null;
     private ICylinder selected_bond_ = null;
@@ -82,24 +85,25 @@ public class Atoms : MonoBehaviour
 
     AtomInfoBox info_ui_;
 
-    public float speed_object_move = 1;
+    public float speed_object_towards_move = 1;
+    public float speed_object_vertical_move = 0.07f;
 
     void Start()
     {
         List<Atom> atoms;
         List<List<int>> connections;
-        PDBParser.ParseAtomsAndConnections(@"Assets/MModels/1tes.pdb", out atoms, out connections);
-        //PDBParser.ParseAtomsAndConnections(@"Assets/MModels/4f0h.pdb", out atoms, out connections);
+        //PDBParser.ParseAtomsAndConnections(@"Assets/MModels/1tes.pdb", out atoms, out connections);
+        PDBParser.ParseAtomsAndConnections(@"Assets/MModels/4f0h.pdb", out atoms, out connections);
         //PDBParser.ParseAtomsAndConnections(@"Assets/MModels/1s5l.pdb", out atoms, out connections);
+
         //PDBParser.ParseAtomsAndConnections(@"Assets/MModels/1ea4.pdb", out atoms, out connections);
 
-        Bounds atoms_bounding_box = new Bounds();
 
         foreach (Atom atom in atoms)
         {
             /* Units in Nano meters */
             Vector3 atom_position = new Vector3(atom.x_, atom.y_, atom.z_);
-            atoms_bounding_box.Encapsulate(atom_position);
+            atoms_bounding_box_.AddPoint(atom_position);
 
             /* Instantiate the object */
             GameObject temp = Instantiate(prefab_atom, atom_position, Quaternion.identity);
@@ -166,7 +170,7 @@ public class Atoms : MonoBehaviour
         }
         Debug.Log("Spawned: " + bonds + " bonds");
 
-        SetCameraAndPanelBoxPosition(atoms_bounding_box);
+        SetCameraAndPanelBoxPosition(atoms_bounding_box_);
 
         bonds_selected_[0] = null;
         bonds_selected_[1] = null;
@@ -177,14 +181,20 @@ public class Atoms : MonoBehaviour
         info_ui_ = Camera.main.transform.Find("AtomInfoBox").GetComponent<AtomInfoBox>();
 
     }
-    
-    private void SetCameraAndPanelBoxPosition(Bounds atoms_bounds) {
-        Camera.main.transform.position = atoms_bounds.center + (atoms_bounds.extents.z + 0.7f) * new Vector3(0, 0, 1);
-        Camera.main.transform.LookAt(atoms_bounds.center);
 
+    private void SetCameraAndPanelBoxPosition(BoundingBox atoms_bounds) {
+        Camera.main.transform.position = atoms_bounds.center;
+        Camera.main.transform.position += (atoms_bounds.extents.z + 0.9f) * new Vector3(0, 0, 1);
+        Camera.main.transform.position += atoms_bounds.extents.y/6 * new Vector3(0, 1, 0);
+
+        Camera.main.transform.LookAt(atoms_bounds.center);
+        
         Transform panel_box = transform.Find("Panel");
-        float min_extend = Mathf.Min(atoms_bounds.extents.x, atoms_bounds.extents.y, atoms_bounds.extents.z);
-        panel_box.transform.position = atoms_bounds.center + (min_extend + 2) * Camera.main.transform.right;
+        panel_box.transform.position = atoms_bounds.center + (atoms_bounds.extents.x + 2) * Camera.main.transform.right;
+
+        GameObject walls = GameObject.Find("Walls");
+        walls.transform.position = Camera.main.transform.position;
+        walls.transform.position = new Vector3(atoms_bounds.center.x, atoms_bounds.min.y - 0.08f, atoms_bounds.center.z);
     }
 
     public VisualizationMethod GetVisualizationMethod()
@@ -244,8 +254,21 @@ public class Atoms : MonoBehaviour
 
     /* The following change function are called by string reference, from the world UI buttons */
     public void ChangeVisualizationMethod() {
-        if (visualization_method_ == VisualizationMethod.BALL_AND_STICK) SetVisualizationMethod(VisualizationMethod.SPACE_FILLING);
-        else SetVisualizationMethod(VisualizationMethod.BALL_AND_STICK);
+        if (visualization_method_ == VisualizationMethod.BALL_AND_STICK) {
+            SetVisualizationMethod(VisualizationMethod.SPACE_FILLING);
+
+            if (marked_atom_object_ != null) {
+                ISphere sphere = marked_sphere_.GetComponent<ISphere>();
+                marked_atom_object_.transform.position = sphere.transform.position + 1.4f * Vector3.up * AtomicRadii.GetCovalentRadius(sphere.atom_.element_);
+            }
+        } else {
+            SetVisualizationMethod(VisualizationMethod.BALL_AND_STICK);
+
+            if (marked_atom_object_ != null) {
+                ISphere sphere = marked_sphere_.GetComponent<ISphere>();
+                marked_atom_object_.transform.position = sphere.transform.position + 1.4f * Vector3.up * AtomicRadii.ball_and_stick_radius;
+            }
+        }
     }
     public void ChangeSelectionPlaneVisualizationMethod() {
         if (selection_visualization_ == SelectionVisualizationMethod.ARROWS) selection_visualization_ = SelectionVisualizationMethod.COLOR_CIRCLE;
@@ -268,23 +291,32 @@ public class Atoms : MonoBehaviour
         }
     }
     public void ChangeModeToExploringAtoms() {
-        ResetState();
+        if (state == STATE.BOND_ANGLES) ResetState(true);
+        else ResetState(false);
+
         state = STATE.EXPLORING_ATOMS;
         transform.GetChild(1).GetComponent<ModePanel>().SetState(state);
     }
 
     public void ChangeModeToAtomDistances() {
-        ResetState();
+        if (state == STATE.BOND_ANGLES) ResetState(true);
+        else ResetState(false);
+
         state = STATE.ATOM_DISTANCES;
         transform.GetChild(1).GetComponent<ModePanel>().SetState(state);
     }
     public void ChangeModeToBondAngles() {
-        ResetState();
+        if (state != STATE.BOND_ANGLES) ResetState(true);
+        else ResetState(false);
+
         state = STATE.BOND_ANGLES;
         transform.GetChild(1).GetComponent<ModePanel>().SetState(state);
+        info_ui_.ResetInfo();
     }
     public void ChangeModeToTorsionAngles() {
-        ResetState();
+        if (state == STATE.BOND_ANGLES) ResetState(true);
+        else ResetState(false);
+
         state = STATE.TORSION_ANGLE;
         transform.GetChild(1).GetComponent<ModePanel>().SetState(state);
     }
@@ -310,39 +342,59 @@ public class Atoms : MonoBehaviour
         transform.GetChild(1).GetComponent<ModePanel>().SetRadius(SELECTION_MODE_SPHERE_RADIUS);
     }
 
-    private void ResetState() {
-        info_ui_.ResetInfo();
+    private void ResetState(bool destroy_selection) {
         switch (state) {
             case STATE.EXPLORING_ATOMS:
-                if (selection_plane_previous_ != null) Destroy(selection_plane_previous_);
-                selected_atom_ = null;
+                if (selection_plane_previous_ != null) {
+                    if (destroy_selection) {
+                        Destroy(selection_plane_previous_);
+                        selected_atom_ = null;
+                        info_ui_.ResetInfo();
+                    }
+                }
 
                 break;
             case STATE.ATOM_DISTANCES:
-                if (selection_plane_previous_ != null) Destroy(selection_plane_previous_);
+                if (selection_plane_previous_ != null) {
+                    if (destroy_selection) {
+                        Destroy(selection_plane_previous_);
+                        selected_atom_ = null;
+                        info_ui_.ResetInfo();
+                    }
+                }
                 if (atom_distance_previous_ != null) Destroy(atom_distance_previous_);
                 if (marked_atom_object_ != null) Destroy(marked_atom_object_);
+                marked_sphere_ = null;
                 atoms_selected_[0] = null;
                 atoms_selected_[1] = null;
                 atoms_selected_[2] = null;
                 atoms_selected_[3] = null;
                 atom_selected_id_ = 0;
-                selected_atom_ = null;
 
                 break;
             case STATE.BOND_ANGLES:
-                if (selection_plane_previous_ != null) Destroy(selection_plane_previous_);
+                if (selection_plane_previous_ != null) {
+                    if (destroy_selection) {
+                        Destroy(selection_plane_previous_);
+                        selected_bond_ = null;
+                    }
+                }
                 if (arc_previous_ != null) Destroy(arc_previous_);
                 if (bonds_selected_[0] != null) bonds_selected_[0].SetHighlighted(HighlightColors.HIGHLIGHT_COLOR.NO_HIGHLIGHT);
                 if (bonds_selected_[1] != null) bonds_selected_[1].SetHighlighted(HighlightColors.HIGHLIGHT_COLOR.NO_HIGHLIGHT);
                 bonds_selected_[0] = null;
                 bonds_selected_[1] = null;
                 bonds_selected_id_ = 0;
-                selected_bond_ = null;
 
                 break;
             case STATE.TORSION_ANGLE:
-                if (selection_plane_previous_ != null) Destroy(selection_plane_previous_);
+                if (selection_plane_previous_ != null) {
+                    if (destroy_selection) {
+                        Destroy(selection_plane_previous_);
+                        selected_atom_ = null;
+                        info_ui_.ResetInfo();
+                    }
+                }
                 if (torsion_angle_previous_ != null) Destroy(torsion_angle_previous_);
                 if (atoms_selected_[0] != null) atoms_selected_[0].SetHighlighted(HighlightColors.HIGHLIGHT_COLOR.NO_HIGHLIGHT);
                 if (atoms_selected_[1] != null) atoms_selected_[1].SetHighlighted(HighlightColors.HIGHLIGHT_COLOR.NO_HIGHLIGHT);
@@ -355,7 +407,6 @@ public class Atoms : MonoBehaviour
                 atom_selected_id_ = 0;
                 torsion_plane_spawned_ = false;
                 info_ui_.ClearTorsionAtoms();
-                selected_atom_ = null;
 
                 break;
             default:
@@ -372,6 +423,7 @@ public class Atoms : MonoBehaviour
 
     void Update() {
 
+        /* If the bring forward the panel button is hit, the ray cast only in UI layer */
         if (Input.GetKey(KeyCode.Space)) {
             bool ui_hit = RayCastUIlayer();
             if (ui_hit) return;
@@ -384,26 +436,42 @@ public class Atoms : MonoBehaviour
          */
         bool ray_cast_hit = Physics.Raycast(Camera.main.transform.position + Camera.main.transform.forward * AtomicRadii.ball_and_stick_radius, Camera.main.transform.forward, out hit, 100.0f);
 
+        /* Process model manipulation input */
+        if (Input.GetKey(KeyCode.Keypad1)) {
+            MoveTowardsSelectedObject(speed_object_towards_move);
+        }
+
+        if (Input.GetKey(KeyCode.Keypad7)) {
+            MoveTowardsSelectedObject(-speed_object_towards_move);
+        }
+
+        if (Input.GetKey(KeyCode.Keypad4)) {
+            transform.position = transform.position - Camera.main.transform.right * speed_object_vertical_move;
+        }
+
+        if (Input.GetKey(KeyCode.Keypad6)) {
+            transform.position = transform.position + Camera.main.transform.right * speed_object_vertical_move;
+        }
+
+        if (Input.GetKey(KeyCode.Keypad8)) {
+            transform.position = transform.position + Camera.main.transform.up * speed_object_vertical_move;
+        }
+
+        if (Input.GetKey(KeyCode.Keypad5)) {
+            transform.position = transform.position - Camera.main.transform.up * speed_object_vertical_move;
+        }
+
+        /* Check ray cast against a button */
         if (ray_cast_hit) {
             Debug.DrawRay(Camera.main.transform.position, Camera.main.transform.forward * hit.distance, Color.white);
 
             ButtonEvent button = hit.transform.GetComponent<ButtonEvent>();
             if (button != null) {
                 ProcessRayCastUIHit(hit);
-                ClearHighlighted();
-                return;
             }
         }
 
-        if (Input.GetKey(KeyCode.T)) {
-            MoveTowardsSelectedObject(speed_object_move);
-        }
-
-        if (Input.GetKey(KeyCode.Y)) {
-            MoveTowardsSelectedObject(-speed_object_move);
-        }
-
-
+        /* Process state machine */
         if (state == STATE.EXPLORING_ATOMS) {
 
             if (selected_atom_ != null) {
@@ -458,7 +526,7 @@ public class Atoms : MonoBehaviour
         else if (state == STATE.ATOM_DISTANCES) {
 
             if (Input.GetKeyDown(KeyCode.Escape)) {
-                ResetState();
+                ResetState(true);
                 return;
             }
 
@@ -484,6 +552,7 @@ public class Atoms : MonoBehaviour
                         selected_atom_radius = AtomicRadii.GetCovalentRadius(plane.center_sphere_.atom_.element_);
                     }
                     marked_atom_object_.transform.position = plane.center_sphere_.transform.position + 1.4f * Vector3.up * selected_atom_radius;
+                    marked_sphere_ = plane.center_sphere_.gameObject;
 
                     if (previously_added != null) {
                         Vector3 middle = (previously_added.transform.position + plane.center_sphere_.transform.position) / 2;
@@ -540,7 +609,7 @@ public class Atoms : MonoBehaviour
         else if (state == STATE.BOND_ANGLES) {
 
             if (Input.GetKeyDown(KeyCode.Escape)) {
-                ResetState();
+                ResetState(true);
                 return;
             }
 
@@ -596,13 +665,13 @@ public class Atoms : MonoBehaviour
             if (Input.GetKeyDown(KeyCode.Escape)) {
                 if (torsion_plane_spawned_) {
                     ISphere last_added_sphere = ((atom_selected_id_ == 0) ? atoms_selected_[3] : atoms_selected_[atom_selected_id_ - 1]);
-                    ResetState();
+                    ResetState(false);
                     selected_atom_ = last_added_sphere;
-                    info_ui_.SetAtom(last_added_sphere);
                     SpawnSelectionPlaneSpheres();
+                    info_ui_.SetAtom(last_added_sphere);
                 }
                 else {
-                    ResetState();
+                    ResetState(true);
                 }
 
                 return;

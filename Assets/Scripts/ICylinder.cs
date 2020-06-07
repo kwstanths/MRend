@@ -50,7 +50,7 @@ public class ICylinder : MonoBehaviour
 
         /* Set collision radius */
         float scaling = transform.localScale.x;
-        GetComponent<CapsuleCollider>().radius = radius_ / scaling;
+        GetComponent<CapsuleCollider>().radius = 1.7f * radius_ / scaling;
     }
 
     public void SetHeight(float height)

@@ -1,10 +1,10 @@
 ﻿Shader "Hidden/Custom/Outline"
 {
     HLSLINCLUDE
-    #include "Packages/com.unity.postprocessing/PostProcessing/Shaders/StdLib.hlsl"
+#include "Packages/com.unity.postprocessing/PostProcessing/Shaders/StdLib.hlsl"
 
-    /* Currently drawn texture */
-    TEXTURE2D_SAMPLER2D(_MainTex, sampler_MainTex);
+        /* Currently drawn texture */
+        TEXTURE2D_SAMPLER2D(_MainTex, sampler_MainTex);
     /* Thickness parameter */
     int _Thickness;
     /* The Gbuffer render target with the highlighted information */
@@ -48,7 +48,7 @@
                 }
             }
         }
-        
+
         /* If it's border return color of outline */
         if (is_border) return GetHighlightColor(selected_value);
 
@@ -56,13 +56,13 @@
         return SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, i.texcoord);
     }
 
-    ENDHLSL
+        ENDHLSL
 
-    SubShader
+        SubShader
     {
         Cull Off ZWrite Off ZTest Always
 
-        Pass
+            Pass
         {
             HLSLPROGRAM
 
