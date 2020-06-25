@@ -11,7 +11,7 @@ public class PDBParser
 
         if (!File.Exists(file_name)) {
             Debug.Log("File: " + file_name + " not found");
-            return;
+            throw new IOException("Can't find model file: " + file_name);
         }
 
         string[] readText = File.ReadAllLines(file_name);

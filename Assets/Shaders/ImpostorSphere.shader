@@ -110,6 +110,7 @@
         }
 
         Pass {
+            /* Base forward rendering shader, executed when the rendering mode is set to forward, and with the point lights as input */
             Tags { "LightMode" = "ForwardAdd" }
 
             Blend One One

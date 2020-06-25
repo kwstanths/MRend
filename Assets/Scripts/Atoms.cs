@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using UnityEngine;
 using UnityEngine.Rendering.PostProcessing;
 
@@ -95,11 +96,17 @@ public class Atoms : MonoBehaviour
     {
         List<Atom> atoms;
         List<List<int>> connections;
-        //PDBParser.ParseAtomsAndConnections(@"Assets/MModels/1tes.pdb", out atoms, out connections);
-        PDBParser.ParseAtomsAndConnections(@"Assets/MModels/4f0h.pdb", out atoms, out connections);
-        //PDBParser.ParseAtomsAndConnections(@"Assets/MModels/1s5l.pdb", out atoms, out connections);
+        string model_name;
 
-        //PDBParser.ParseAtomsAndConnections(@"Assets/MModels/1ea4.pdb", out atoms, out connections);
+        try {
+            model_name = ParseInputModelFile();
+            PDBParser.ParseAtomsAndConnections(@"Assets/MModels/" + model_name, out atoms, out connections);
+        }
+        catch (System.IO.IOException) {
+            print("Parsing input error");
+            return;
+        }
+
 
         /*  Spawn the objects */
         foreach (Atom atom in atoms)
@@ -191,6 +198,18 @@ public class Atoms : MonoBehaviour
         transform.GetChild(1).GetComponent<ModePanel>().SetRadius(SELECTION_MODE_SPHERE_RADIUS);
 
         info_ui_ = Camera.main.transform.Find("AtomInfoBox").GetComponent<AtomInfoBox>();
+    }
+
+    private string ParseInputModelFile() {
+        string file_name = @"Assets/MModels/input_model.txt";
+
+        if (!File.Exists(file_name)) {
+            Debug.Log("File: " + file_name + " not found");
+            throw new IOException("Can't find input file: " + file_name);
+        }
+
+        string[] input_lines = File.ReadAllLines(file_name);
+        return input_lines[0];
     }
 
     private void SetCameraAndPanelBoxPosition(BoundingBox atoms_bounds) {
@@ -638,39 +657,7 @@ public class Atoms : MonoBehaviour
 
             /* Else process ray cast hit */
             if (ray_cast_hit) {
-
-                /* Hit a sphere? */
-                ISphere isphere = hit.transform.GetComponent<ISphere>();
-                if (isphere != null) {
-                    /* Check if selection of an atom is triggered */
-                    if (Input.GetMouseButtonDown(0) == true) {
-                        selected_atom_ = isphere;
-                        SpawnSelectionPlaneSpheres();
-                        return;
-                    }
-
-                    /* If not, set highlighting based on the visulization method */
-                    info_ui_.SetAtom(isphere);
-                    if (exploring_method_ == ExploringMethod.RESIDUES && !highlighted_spheres_.Contains(isphere)) {
-                        ClearHighlighted();
-                        HighLightResidue(isphere);
-                    }
-                    else if (exploring_method_ == ExploringMethod.CHAINS) {
-                        /* Highlight residue */
-                        if (!highlighted_spheres_.Contains(isphere)) {
-                            ClearHighlighted();
-                            HighLightResidue(isphere);
-                        }
-
-                        /* Color chain */
-                        if (!colored_spheres_.Contains(isphere)) {
-                            ClearColored();
-                            ColorChain(isphere);
-                        }
-                    }
-
-                }
-
+                ProcessRayCastHit(hit);
             } else {
                 /* If ray cast failed, clear highlighting */
                 ClearHighlighted();
@@ -738,33 +725,7 @@ public class Atoms : MonoBehaviour
 
             /* If there is not selected atom, process ray casting as usual */
             if (ray_cast_hit) {
-                ISphere isphere = hit.transform.GetComponent<ISphere>();
-
-                if (isphere != null) {
-                    if (Input.GetMouseButtonDown(0) == true) {
-                        selected_atom_ = isphere;
-                        SpawnSelectionPlaneSpheres();
-                        return;
-                    }
-
-                    info_ui_.SetAtom(isphere);
-                    if (exploring_method_ == ExploringMethod.RESIDUES && !highlighted_spheres_.Contains(isphere)) {
-                        ClearHighlighted();
-                        HighLightResidue(isphere);
-                    }
-                    else if (exploring_method_ == ExploringMethod.CHAINS) {
-                        if (!highlighted_spheres_.Contains(isphere)) {
-                            ClearHighlighted();
-                            HighLightResidue(isphere);
-                        }
-
-                        if (!colored_spheres_.Contains(isphere)) {
-                            ClearColored();
-                            ColorChain(isphere);
-                        }
-                    }
-                }
-
+                ProcessRayCastHit(hit);
             } else {
                 ClearHighlighted();
                 if (exploring_method_ != ExploringMethod.CHAINS) ClearColored();
@@ -800,7 +761,7 @@ public class Atoms : MonoBehaviour
                 return;
             }
 
-            /* Else, process ray casting */
+            /* Else, process ray casting for bonds */
             if (ray_cast_hit) {
                 ClearHighlighted();
 
@@ -810,6 +771,7 @@ public class Atoms : MonoBehaviour
                     icylinder.SetHighlighted(HighlightColors.HIGHLIGHT_COLOR.WHITE);
                     previously_highlighted_bond_ = icylinder;
 
+                    /* If bond seleted, spawn selection object */
                     if (Input.GetMouseButtonDown(0) == true) {
                         selected_bond_ = icylinder;
                         SpawnSelectionPlaneCylinders();
@@ -875,33 +837,7 @@ public class Atoms : MonoBehaviour
 
             /* Else ray cast as usual */
             if (ray_cast_hit && !torsion_plane_spawned_) {
-                ISphere isphere = hit.transform.GetComponent<ISphere>();
-
-                if (isphere != null) {
-                    if (Input.GetMouseButtonDown(0) == true) {
-                        selected_atom_ = isphere;
-                        SpawnSelectionPlaneSpheres();
-                        return;
-                    }
-
-                    info_ui_.SetAtom(isphere);
-                    if (exploring_method_ == ExploringMethod.RESIDUES && !highlighted_spheres_.Contains(isphere)) {
-                        ClearHighlighted();
-                        HighLightResidue(isphere);
-                    }
-                    else if (exploring_method_ == ExploringMethod.CHAINS) {
-                        if (!highlighted_spheres_.Contains(isphere)) {
-                            ClearHighlighted();
-                            HighLightResidue(isphere);
-                        }
-
-                        if (!colored_spheres_.Contains(isphere)) {
-                            ClearColored();
-                            ColorChain(isphere);
-                        }
-                    }
-                }
-
+                ProcessRayCastHit(hit);
             }
             else {
                 ClearHighlighted();
@@ -914,7 +850,38 @@ public class Atoms : MonoBehaviour
 
     }
 
-    private void RayCastAtoms() {
+    /* Process ray cast hit against atoms */
+    private void ProcessRayCastHit(RaycastHit hit) {
+        /* Hit a sphere? */
+        ISphere isphere = hit.transform.GetComponent<ISphere>();
+        if (isphere != null) {
+            /* Check if selection of an atom is triggered */
+            if (Input.GetMouseButtonDown(0) == true) {
+                selected_atom_ = isphere;
+                SpawnSelectionPlaneSpheres();
+                return;
+            }
+
+            /* If not, set highlighting based on the visulization method */
+            info_ui_.SetAtom(isphere);
+            if (exploring_method_ == ExploringMethod.RESIDUES && !highlighted_spheres_.Contains(isphere)) {
+                ClearHighlighted();
+                HighLightResidue(isphere);
+            }
+            else if (exploring_method_ == ExploringMethod.CHAINS) {
+                /* Highlight residue */
+                if (!highlighted_spheres_.Contains(isphere)) {
+                    ClearHighlighted();
+                    HighLightResidue(isphere);
+                }
+
+                /* Color chain */
+                if (!colored_spheres_.Contains(isphere)) {
+                    ClearColored();
+                    ColorChain(isphere);
+                }
+            }
+        }
 
     }
 
